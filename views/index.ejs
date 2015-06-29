@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>无纸化会议系统大屏幕</title>
+    <link href="css/style.css" rel="stylesheet" type="text/css" media="all" />
+    <link href="css/bootstrap.css" rel="stylesheet" type="text/css" media="all" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="keywords" content="Costamar Responsive web template, Bootstrap Web Templates, Flat Web Templates, Andriod Compatible web template,
+		Smartphone Compatible web template, free webdesigns for Nokia, Samsung, LG, SonyErricsson, Motorola web design" />
+
+    <style>
+
+        #arrived{color:green;}
+        #no_arrived{color:red;}
+		
+		.meetingInfo > p {font-size:70px;
+                                      color: #00BFFF}
+
+		.meetingInfo > h2 { color: #0066FF;
+            font-size:120px;
+}
+
+    </style>
+
+</head>
+
+<body onbeforeunload="return '如果会议未结束，关闭屏幕会影响显示结果！！！'" style="text-align:center">
+<!-- header -->
+<div class="header-bg">
+    <div class="container">
+
+        <div class="head-logo">
+            <a href="#"><img src="images/logo.png" alt=" "></a>
+        </div>
+        <div class="clearfix"> </div>
+    </div>
+
+</div>
+<!-- //header -->
+<!-- banner -->
+
+<% if(title === '' && content === ''){%>
+
+<div id="noMeeting" style="margin-top:60px">
+    <h2>当前没有会议,请稍后刷新再试！否则显示有误</h2><br>
+</div>
+
+<%}else if(title !== '' && content === ''){%>
+
+<div class="meetingInfo" style="margin-top:60px">
+    <h2><%= title %></h2><br>
+    <p id = 'checkinInfo'>签到信息：已到<span id = "arrived"><%= arrived %></span>人,未到<span id = "no_arrived"><%= notArrived %></span>人</p>
+    <div id = "overInfo" style="display: none; font-size:70px; color: red">会议已结束！</div>
+</div>
+
+<div id="topicInfo" style="display:none ">
+    <h1 style="color: #0066FF;font-size:120px"><%= title %></h1>
+    <p style="font-size:70px;">议题: <%= content %></p>
+</div>
+
+<%}else {%>
+
+<div class="meetingInfo" style="margin-top:60px;display:none ">
+    <h2><%= title %></h2><br>
+    <p id = 'checkinInfo'>签到信息：已到<span id = "arrived">0</span>人,未到<span id = "no_arrived">0</span>人</p>
+    <div id = "overInfo" style="display: none; font-size:70px; color: red">会议已结束！</div>
+</div>
+
+<div id="topicInfo" >
+    <h1 style="color: #0066FF;font-size:120px"><%= title %></h1>
+    <p style="font-size:70px;">议题: <%= content %></p>
+</div>
+
+<%}%>
+
+
+
+
+<!-- //banner -->
+<!-- banner-bottom -->
+<!-- //banner-bottom -->
+
+
+
+<div>
+    <br>
+</div>
+
+<div id="statistics" style="display: none;">
+
+    <div id="container" style="margin-top:20px; height: 600px;">
+
+    </div>
+</div>
+<div class="gallery" style="margin-top:20px">
+
+    <div id="portfoliolist" class="avatar_projection">
+        <!--div class="portfolio card mix_all  wow bounceIn" data-wow-delay="0.4s" data-cat="card" style="display: inline-block; opacity: 1;">
+            <div class="portfolio-wrapper">
+            </div>
+        </div-->
+        <!--div class="portfolio card mix_all  wow bounceIn" data-wow-delay="0.4s" data-cat="card" style="display: inline-block; opacity: 1;">
+            <div class="portfolio-wrapper">
+            </div>
+        </div-->
+        <div class="clearfix"></div>
+    </div>
+    <div class="clearfix"></div>
+
+</div>
+
+<div id="vod_projection" style="display: none; width:100%;height:100%;position: absolute; top: 0; left: 0;background-color:black;">
+</div>
+
+<script type="text/javascript" src="ckplayer/ckplayer.js" charset="utf-8"></script>
+<script src="/js/socket.io-1.2.0.js"></script>
+<script src="/js/jquery-1.11.1.js"></script>
+<script src="/js/highcharts.js" type="text/javascript"></script>
+<script src="/js/client.js"></script>
+
+</body>
+</html>
