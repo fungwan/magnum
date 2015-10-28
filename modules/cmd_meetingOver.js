@@ -6,7 +6,7 @@ var logger = require('../lib/log.js').logger;
 var jsonFormat = require('../lib/jsonFormat');
 var transponder = require('./message_forward');
 var dbOperate = require('./db_operate');
-var portMgt = require('./port_manage');
+var ClientList = require('./client_list');
 
 exports.meetingOver = function(parameters, socket){
 
@@ -30,6 +30,10 @@ exports.meetingOver = function(parameters, socket){
 
     //set meeting status 4.0.0
     dbOperate.setMeetingStatus("4.0.0",_meetingId);
+
+
+    //delete all device
+    //ClientList.removeAllClient();
 
     logger.info('cmd_meetingOver - 会议id为： ' + _meetingId + '的会议已结束!\n当前服务器状态初始化为' + statusManage.showCurrentStatus());
 };

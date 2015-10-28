@@ -4,7 +4,7 @@
 //about Mysql database
 exports.slave1Config = {
     connectionLimit : 10000,
-    host            : '192.168.1.111',
+    host            : '192.168.1.2',
     user            : 'root',
     password        : '123123',
     database        :'plc_db',

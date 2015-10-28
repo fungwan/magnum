@@ -45,5 +45,16 @@ exports.cancelProjection = function(parameters, socket){
 
         logger.trace('cmd_cancelProjection - 开始转发消息到WEB，内容为：' + jsonFormat.jsonToString(msg));
         transponder.messageForwardAll(socket, jsonFormat.jsonToString(msg));
+    }else if(parameters.type === 'syncOfficeToWeb'){
+        logger.trace('cmd_cancelProjection - 收到取消同屏Office投影消息');
+        var msg = {
+            cmd:'cancelProjection',
+            parameters:{
+                type:'syncOfficeToWeb'
+            }
+        };
+
+        logger.trace('cmd_cancelProjection - 开始转发消息到WEB，内容为：' + jsonFormat.jsonToString(msg));
+        transponder.messageForwardAll(socket, jsonFormat.jsonToString(msg));
     }
 };

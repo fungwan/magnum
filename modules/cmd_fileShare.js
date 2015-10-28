@@ -18,6 +18,6 @@ exports.fileShare = function(parameters, socket){
             fileUrl:parameters.fileUrl
         }
     }
-    logger.trace('cmd_fileShare - 开始发送文件共享消息：' + jsonFormat.jsonToString(response));
+    logger.debug('cmd_fileShare - 开始发送文件共享消息：' + jsonFormat.jsonToString(response));
     transponder.messageForward(parameters.receiverId, jsonFormat.jsonToString(response));
 };

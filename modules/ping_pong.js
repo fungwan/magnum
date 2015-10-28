@@ -8,7 +8,6 @@
 
 var   userQueue   = require('./client_list.js');
 var   logger      = require('../lib/log.js').logger;
-var db_operator = require('./db_operate');
 
 function ping_pong() {
 }
@@ -18,24 +17,37 @@ ping_pong.openTimer = function(){
     setInterval(function(){
         var tokenTime = 20 * 1000;//20s
         var list = userQueue.list;
+        var deviceCounts = 0;
+        var memberList = [];
         for(var x = 0; x < list.length; ){
             var currentDate = new Date();
             var time =currentDate.getTime();
             var ele = list[x];
-            if(ele === undefined){
-                ++x;
-                continue;
-            }
-            var difference = time - ele.time;
-            if(difference > tokenTime){//user should quit?!
-                db_operator.logoff(ele.socket);
-               // logger.debug('ping_pong - current client numbers: ' + userQueue.list.length);
+
+            /*
+
+            因为考虑到socket.io强大的重连机制，所以这里的定时器，刷新在线设备列表仅是测试时方便查看   modify by fengyun 2015/7/10
+
+             */
+//            if(ele === undefined){
+//                ++x;
+//                continue;
+//            }
+//            var difference = time - ele.time;
+//            if(difference > tokenTime){//user should quit?!
+//                db_operator.logoff(ele.socket);
+//               // logger.debug('ping_pong - current client numbers: ' + userQueue.list.length);
+//            }
+            if(ele.mac !== 'WEB-CLIENT' && ele.mac !== 'WEB-SCREEN'){
+                memberList.push(ele.name);
+                ++deviceCounts;
             }
             ++x;
         }
-      //  logger.debug('ping_pong - current client numbers: ' + userQueue.list.length);
+        logger.debug('ping_pong - current client numbers: ' + memberList.length +
+            ' 分别有：' + memberList.join(","));
 
-    },3000);//3s timer
+    },10000);//10s timer
 };
 
 module.exports = ping_pong;

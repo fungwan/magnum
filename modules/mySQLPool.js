@@ -5,12 +5,16 @@
 var mysql       = require('mysql'),
     conf        = require('../conf');
 
+
+
+
+
 var poolCluster = mysql.createPoolCluster();  
   
 poolCluster.add('SLAVE1', conf.slave1Config);  
 poolCluster.add('SLAVE2', conf.slave2Config);  
 	
-//var pool  = mysql.createPool(conf.mysqlOption);
+var pool  = mysql.createPool(conf.slave1Config);
 
-module.exports = poolCluster;
+module.exports = pool;
 

@@ -13,11 +13,12 @@ var t_account = "plc_account",
     t_checkin = "plc_checkin",
     t_conference = "plc_conference",
     t_device = "plc_device",
-    t_filesManagement = "plc_filesManagement",
+    t_filesManagement = "plc_filesmanagement",
     t_member = 'plc_member',
-    t_sitPosition = 'plc_sitPosition',
-    t_topicManagement = 'plc_topicManagement';
+    t_screenconfigure = 'plc_screenconfigure',
+    t_topicManagement = 'plc_topicmanagement';
 
+var isSetMeetingStates = 0;
 
 //==================================================================
 //函数名：  logon
@@ -26,46 +27,67 @@ var t_account = "plc_account",
 //功能：    完成登录动作，包括：判断是否注册、是否已签过到、更新登录标记、获取终端人员名和角色
 //输入参数  登录终端的MAC、触发器
 //==================================================================
-exports.logon = function(mac, emitter){
+exports.logon = function(mac, logonReply){
+
+    /*
+        重构登陆逻辑 2015/7/17 by fengyun
+     */
+
+    var seatNo = -1;//针对登陆失败而定义的seatNo
+
     async.auto({
         is_register: function(callback){
             var condition = 'WHERE mac = \'' + mac + '\'';
-            dbService.selectValue('id', t_device, condition, callback);
+            dbService.selectValueEx('id,orders', t_device, condition, callback);
         },
-        update_online: ['is_register',function(callback, results){
-            var id = results.is_register;
-            if(id === ''){
+
+        //查看是否有会议
+        get_meetingStates : ['is_register',function(callback,results){
+
+            var rsData = results.is_register;
+
+            var id = rsData['id'];
+            if(id === '' || id === undefined){
                 logger.error('db_operate::logon() - 设备未注册 ' + mac);
-                callback('err');
-            }else{
-                var condition = 'WHERE mac = \'' + mac + '\'';
-                dbService.updateValue(t_device, 'isOnline = 1 ', condition,callback);
+                callback('No Register');
+                return;
             }
+
+            seatNo = rsData['orders'];
+
+            var condition = 'WHERE states <> \'0.0.0\' and states <> \'4.0.0\'';
+            dbService.selectValueEx('id,states',t_conference,condition,callback);
+
         }],
-        is_anyMeeting:['update_online', function(callback){
-            var status = statusManage.getCurrentStatus();
-            if(status.mainStatus === 0){
-                callback('No Meeting', '');//当前没有会议
+
+        get_memberId: ['get_meetingStates',function(callback,results){
+
+            var rsData = results.get_meetingStates;
+
+            var conferenceId = rsData['id'];
+            if(conferenceId === '' || conferenceId === undefined){
+                callback('No Meeting', seatNo);//当前没有会议
+                return;
             }
-            else{
-                callback(null, '');//当前有会议，继续判断是否已经签过到
-            }
-        }],
-        //以上代码为正常登录流程，以下代码为检测此终端是否已经签过到，即会议途中断线重连的情况
-        get_memberId: ['is_anyMeeting', function(callback){
-            var sql = 'SELECT plc_member.id FROM  plc_member, ' +
+
+            var sql = 'SELECT plc_member.id, plc_member.name, plc_member.job,plc_member.company,plc_member.avatarUrl,plc_member.role FROM  plc_member, ' +
                 '(select id FROM plc_device WHERE mac = \'' + mac +'\') as deviceId ' +
                 ' WHERE deviceId.id = plc_member.deviceId and plc_member.conferenceId = '+
                 statusManage.getMeetingId();
+
             dbService.selectMoreValue(sql, callback);
+
         }],
         Judgment_checkinRecord: ['get_memberId', function(callback, results){
-            var memberId = results.get_memberId;
+
+            var memberId = results.get_memberId;//看有无此人员信息在该会议中
             if(memberId === ''){
-                logger.error('db_operate::logon() - 当前状态表示有会议，但在数据库中未查询到此终端的会议信息');
-                logger.error('db_operate::logon() - 获取成员ID失败： ' + mac);
-                callback('err');
+
+                logger.error('db_operate::logon() - 当前状态有会议，但在数据库中未查询到此终端的会议信息,mac为：' + mac);
+                callback('No InMeeting',seatNo);
+
             }else{
+
                 memberId = results.get_memberId[0].id;
                 var condition = 'WHERE memberId = ' + memberId +' and conferenceId = ';
                 condition += statusManage.getMeetingId();
@@ -73,38 +95,90 @@ exports.logon = function(mac, emitter){
             }
         }]
     },function(err,result) {
+
+        /*
+            修改登陆异常逻辑 2015/7/17 by fengyun
+         */
+
+
         if(err !== null){
-            if(err === 'No Meeting'){ //此处并未有错误，且发现当前没有会议正在进行
-                var response = {
-                    cmd:'logon',
-                    result:'success',
-                    content:{
-                        status : statusManage.getCurrentStatus(),//此处状态应为0.0.0,请核对
-                        meetingId : statusManage.getMeetingId()
-                }
-                }
-                logger.trace('db_operate::logon() - 当前没有会议，返回登录成功消息');
-                var result ={
-                    result: true,
-                    jsonObj: response
-                }
-                emitter.emit('logon',result);
-            }else{                  //以上的if语句为当前没有会议的情况，以下为登录失败的情况。
+
+            if(err === 'No Register'){
+
                 var response = {
                     cmd:'logon',
                     result:'fail',
-                    content:null
-                }
-                logger.error('db_operate::logon() - 登录失败: ' + mac);
-                var result ={
+                    content:{
+                        seatNum : -1
+                    }
+                };
+
+                var _result ={
                     result: false,
                     jsonObj: response
+                };
+
+                logonReply(_result);
+
+                logger.error('db_operate::logon() - 登陆终端并没有在数据库中注册...');
+
+            }else if(err === 'No Meeting' || err === 'No InMeeting'){//'No Meeting No InMeeting '
+
+                var meetingId = 0;
+
+                if(err === 'No Meeting'){
+                    meetingId = -1;
+                }else{
+                    meetingId = statusManage.getMeetingId();
                 }
-                emitter.emit('logon',result);
+
+                var response = {
+                    cmd:'logon',
+                    result:'fail',
+                    content:{
+                        status : statusManage.getCurrentStatus(),
+                        meetingId : meetingId,
+                        seatNum : seatNo
+                    }
+                };
+
+                var _result ={
+                    result: false,
+                    jsonObj: response
+                };
+
+                logger.debug('db_operate- 座次号返回' + response.content.seatNum);
+
+                if(err === 'No Meeting'){
+                    logger.error('db_operate::logon() - 当前没有会议，返回登录失败消息');
+                }else{
+                    logger.error('db_operate::logon() - 当前有会议，但是该设备不在会议当中');
+                }
+
+                logonReply(_result);
+
+            }else{
+
+                var response = {
+                    cmd:'logon',
+                    result:'fail',
+                    content:{}
+                };
+
+                var _result ={
+                    result: false,
+                    jsonObj: response
+                };
+
+                logger.error('db_operate::logon() - 数据库错误' + err);
+
+                logonReply(_result);
             }
+
         }else{
             var status;
             var isCheckin = result.Judgment_checkinRecord;
+            var orders = seatNo;
 
             if(isCheckin === '')//如果已经签过到则直接发送最新的会议状态，如果没签到则发送1.0.0状态让其先进行签到。
                 status = {
@@ -120,15 +194,25 @@ exports.logon = function(mac, emitter){
                 result:'success',
                 content:{
                     status:status,
-                    meetingId : statusManage.getMeetingId()
+                    meetingId : statusManage.getMeetingId(),
+                    seatNum : orders,
+                    peerInfo:result.get_memberId[0]
                 }
-            }
-            logger.trace('db_operate::logon() - 登录成功，MAC地址为： ' + mac);
-            var result ={
+            };
+
+            var _result ={
                 result: true,
                 jsonObj: response
+            };
+            logonReply(_result);
+
+            var condition = 'WHERE mac = \'' + mac + '\'';
+            dbService.updateValue(t_device, 'isOnline = 1 ', condition,updateLogon);
+            function updateLogon(err,data){
+                if(err) logger.error('db_operate::logon() - 设备登录更新失败，可能是数据库原因！');
             }
-            emitter.emit('logon',result);
+
+            logger.info('db_operate::logon() - 登录成功，MAC地址为： ' + mac);
         }
     });
 };
@@ -140,35 +224,25 @@ exports.logon = function(mac, emitter){
 //功能：    获取会议信息，包括：会议基本内容、各项议题、会议文件
 //输入参数  会议ID、mac地址，回调函数
 //==================================================================
-exports.getMeetingInfo = function(meetingId, mac, sendResponse){
+exports.getMeetingInfo = function(meetingId, mac, emitter){
     async.auto({
-        get_nameAndRole: function(callback){
-            var sql = 'SELECT plc_member.name,plc_member.role, plc_member.job, plc_member.company, deviceId.orders as seatNum, '+
-                'plc_member.avatarUrl FROM plc_member, ' +
-                '(SELECT id,orders from plc_device WHERE mac = \'' + mac + '\') as deviceId ' +
-                'WHERE deviceId.id = plc_member.deviceId and plc_member.conferenceId = ' +meetingId;
 
-            dbService.selectMoreValue(sql,callback);
-        },
-        get_baseinfo: function(callback,results){
+        get_baseinfo: function(callback){
             var value = 'name,date,location,overview';
             var condition = 'WHERE id = ' + meetingId;
             dbService.selectValueEx(value, t_conference, condition, callback);
         },
-        get_seatNum: function(callback,results){
-            var value = 'orders';
-            var condition = 'WHERE mac = \'' + mac +'\'';
-            dbService.selectValueEx(value, t_device, condition, callback);
-        },
-        get_topic: function(callback, results){
+
+        get_topic: function(callback){
             var value = 'id,content,type,voteObject';
             var condition = 'WHERE conferenceId = ' + meetingId;
             condition += ' ORDER BY orders';
             dbService.selectMulitValue(value, t_topicManagement, condition, callback);
         },
-        get_files: function(callback, results){
-            var value = 'name,url';
-            condition = 'WHERE conferenceId = ' +  meetingId;
+
+        get_files: function(callback){
+            var value = 'name,url,fileSize as size';
+            var condition = 'WHERE conferenceId = ' +  meetingId;
             dbService.selectMulitValue(value, t_filesManagement, condition, callback);
         }
     },function(err,result) {
@@ -178,27 +252,27 @@ exports.getMeetingInfo = function(meetingId, mac, sendResponse){
                 cmd:'meetingInfo',
                 result:'fail',
                 content:null
-            }
-            sendResponse(response);//调用回调函数完成后续操作
+            };
+            emitter.emit('meetingInfo',response);
+
         }else{
-            if(result.get_nameAndRole === '' || result.get_baseinfo === '' ||
-                result.get_topic === '' || result.get_seatNum === ''){
+            if( result.get_baseinfo === '' ||
+                result.get_topic === '' ){//|| result.get_seatNum === '' || result.get_nameAndRole === ''
                 logger.error('db_operate::getMeetingInfo() - 查询会议信息内容不全，可能数据库信息有误');
                 var response = {
                     cmd:'meetingInfo',
                     result:'fail',
                     content:null
-                }
-                sendResponse(response);
+                };
+                emitter.emit('meetingInfo',response);
             }else{
-                logger.trace('db_operate::getMeetingInfo() - 查询数据库成功,返回会议信息内容 ');
+
                 var response = {
                     cmd:'meetingInfo',
                     result:'success',
                     content:{}
-                }
-                response.content.memberInfo = result.get_nameAndRole[0];
-         //       response.content.memberInfo.seatNum = result.get_seatNum['orders'];
+                };
+
                 response.content.baseInfo = result.get_baseinfo;
                 response.content.topic = result.get_topic;
                 if(result.get_files === '')
@@ -206,7 +280,7 @@ exports.getMeetingInfo = function(meetingId, mac, sendResponse){
                 else
                     response.content.files = result.get_files;
                 response.content.meetingId = meetingId;
-                sendResponse(response);
+                emitter.emit('meetingInfo',response);
             }
         }
     });
@@ -277,11 +351,22 @@ exports.checkin = function (mac, sendResponse) {
 exports.updateCheckin = function(sendUpdateCheckin){
     async.auto({
         get_arrived: function(callback){
-            var condition = 'WHERE conferenceId = ' + statusManage.getMeetingId();
-            dbService.selectValue('count(*)',t_checkin, condition, callback);
+
+            /*
+
+             SELECT count(a.memberId) from
+             (SELECT memberId from plc_checkin WHERE conferenceId = 1431500212154) as a WHERE
+             a.memberId NOT IN (SELECT id as memberId from plc_member WHERE conferenceId = 1431500212154 and role = 0)
+
+             排除服务员的签到信息,去差集  modify by fengyun 2015/7/8
+             */
+
+            var mulitTable = ' (SELECT memberId from plc_checkin WHERE conferenceId = ' + statusManage.getMeetingId()+' ) as a';
+            var condition = ' WHERE a.memberId NOT IN (SELECT id as memberId from plc_member WHERE conferenceId = ' + statusManage.getMeetingId() + ' and role = 0)';
+            dbService.selectValue('count(a.memberId)',mulitTable, condition, callback);
         },
         get_AllNum: [function(callback, results){
-            var condition = 'WHERE conferenceId = ' + statusManage.getMeetingId();
+            var condition = 'WHERE conferenceId = ' + statusManage.getMeetingId() +  ' and role != 0';
             dbService.selectValue('count(*)',t_member, condition, callback);
         }],
         get_chairmanMac:[function(callback, results){
@@ -310,7 +395,7 @@ exports.updateCheckin = function(sendUpdateCheckin){
                         arrived:arrived,
                         notArrived:allNum - arrived
                     }
-                }
+                };
                 res.result = true;
                 res.jsonObj = response;
                 res.mac = result.get_chairmanMac[0].mac;
@@ -338,10 +423,10 @@ exports.getMemberInfo = function(meetingId ,emitter){
              on member.id= plc_checkin.memberId;
 
 
-             //add checkin time sql  by fengyun 2015/0430
+             //add checkin time sql  by fengyun 2015/4/30
              */
-            var sql = 'SELECT  member.`name`,member.job, member.company,member.avatarUrl,member.role,member.mac, plc_checkin.checkinTime' +
-                ' from (select plc_member.id,plc_member.name ,plc_member.job,plc_member.company,avatarUrl,plc_member.role, plc_device.mac FROM plc_member, plc_device'+
+            var sql = 'SELECT  member.orders as seatNum ,member.`name`,member.job, member.company,member.avatarUrl,member.role,member.mac, plc_checkin.checkinTime' +
+                ' from (select plc_device.orders,plc_member.id,plc_member.name ,plc_member.job,plc_member.company,avatarUrl,plc_member.role, plc_device.mac FROM plc_member, plc_device'+
                 ' WHERE plc_member.deviceId = plc_device.id  and conferenceId = ';
             sql += statusManage.getMeetingId();
             sql += ') as member LEFT JOIN plc_checkin on member.id= plc_checkin.memberId';
@@ -359,7 +444,7 @@ exports.getMemberInfo = function(meetingId ,emitter){
             }
             emitter.emit('memberInfo',response);
         }else{
-            logger.trace('db_operate::getMemberInfo() - 查询数据库成功,返回人员信息内容');
+            //logger.trace('db_operate::getMemberInfo() - 查询数据库成功,返回人员信息内容');
             var response = {
                 cmd:'memberInfo',
                 result:'true',
@@ -394,7 +479,7 @@ exports.getWaiterMac = function(emitter){
             res.result = 'false';
             emitter.emit('getWaiterMac',res);
         }else{
-            logger.trace('db_operate::getWaiterMac() - 查询服务员终端MAC地址成功');
+            //logger.trace('db_operate::getWaiterMac() - 查询服务员终端MAC地址成功');
             res.result = 'true';
             res.mac = result.get_waiterMac[0].mac;
             emitter.emit('getWaiterMac',res);
@@ -441,6 +526,34 @@ exports.getChairmanMac = function(meetingId,emitter){
     });
 };
 
+exports.getChairmanId = function(meetingId,emitter){
+
+    /*
+     SELECT plc_device.mac from plc_sitPosition,plc_device WHERE plc_sitPosition.role = 2 AND plc_sitPosition.deviceId = plc_device.id;
+     */
+    async.auto({
+        get_chairmanMac : function(callback){
+
+            var multiSql = 'SELECT plc_device.mac,plc_member.id as memberId from plc_member,plc_device WHERE plc_member.role = 2 AND plc_member.deviceId = plc_device.id AND conferenceId =';
+            multiSql += meetingId;
+
+            dbService.selectMoreValue(multiSql,callback);
+        }
+    },function(err,results){
+        if(err !== null){
+            emitter.emit('getChairmanId','');
+        }else{
+            var macArray = results["get_chairmanMac"];
+            if(macArray.length > 0){
+                emitter.emit('getChairmanId',macArray[0]);
+            }else{
+                emitter.emit('getChairmanId','');
+            }
+
+        }
+    });
+};
+
 //==================================================================
 //函数名：  getMemberidByMAC
 //作者：    junlin
@@ -450,7 +563,7 @@ exports.getChairmanMac = function(meetingId,emitter){
 //返回值：  memberID
 //==================================================================
 
-exports.getMemberidByMAC = function(mac, getSuccessorId){
+exports.getMemberIdByMAC = function(mac, getSuccessorId){
     async.auto({
         getMemberID : function(callback){
 
@@ -499,28 +612,41 @@ exports.setChangeRole = function(meetingId,oldChairmanId,successorId,emitter){
         update plc_member set role = 2 where ID = successorId
      */
     async.auto({
-        set_chairmanRole : function(callback){
-
-            var condition = ' where ID = "' + oldChairmanId +'" and conferenceId = ' + meetingId;
-
-            dbService.updateValue(t_member,'role = 1',condition,callback);
-        },
         set_successorRole : function(callback){
 
             var condition = ' where ID = "' + successorId +'" and conferenceId = ' + meetingId;
 
             dbService.updateValue(t_member,'role = 2',condition,callback);
-        }
+
+        },
+        set_chairmanRole : ['set_successorRole',function(callback, results){
+
+            var re1 = results.set_successorRole;
+            if(re1 === 'success'){
+                var condition = ' where ID = "' + oldChairmanId +'" and conferenceId = ' + meetingId;
+                logger.debug('继承者变为主席成功，数据库设为2');
+                dbService.updateValue(t_member,'role = 1',condition,callback);
+                logger.debug('接着再把原先主席变为列席，数据库设为1');
+            }else{
+                callback('changesuccessorfail','fail');
+            }
+
+        }]
     },function(err,results){
         if(err !== null){
             emitter.emit('changeRoleResult','fail');
         }else{
             var chairmanResult = results["set_chairmanRole"];
             var successorResult = results["set_successorRole"];
-            if(chairmanResult === 'success' && successorResult === 'success')
+
+            if(chairmanResult === 'success' && successorResult === 'success'){
+                logger.debug('dboperate- 数据库 ,角色切换成功！');
                 emitter.emit('changeRoleResult','success');
-            else
+            }else{
+                logger.error('dboperate- 数据库 ,角色切换失败！');
                 emitter.emit('changeRoleResult','fail');
+            }
+
         }
     });
 };
@@ -557,10 +683,13 @@ exports.setVoteResult = function(resultValues,topicId){
 //==================================================================
 exports.logoff= function(socket){
     var client = ClientList.findClientBySocket(socket);
-    if(client === null)
+    if(client === null){
+        logger.debug('断开socket,但是未找到相应的client对象,1.可能设备不在这个会议里面;2.之前的废弃socket');
+        socket.disconnect();
         return;
+    }
 
-    ClientList.removeClient(client.mac);
+    ClientList.removeClient(client.mac,socket);
     var condition = 'WHERE mac = \'' + client.mac + '\'';
     dbService.updateValue(t_device, 'isOnline = 0 ', condition,function(err){
         if(err){
@@ -580,7 +709,7 @@ exports.getTopicContent= function(topicId, emitter){
     async.auto({
         get_topicContent : function(callback){
             var sql = 'select id,content,type,voteObject from ' + t_topicManagement +' WHERE id = '+ topicId +' and conferenceId = '+ statusManage.getMeetingId();
-            logger.debug('operate.js - find topic content ' + sql);
+            //logger.debug('operate.js - find topic content ' + sql);
             dbService.selectMoreValue(sql,callback);
         }
     },function(err,results){
@@ -597,7 +726,7 @@ exports.getTopicContent= function(topicId, emitter){
                 logger.error('db_operate::getTopicContent - 未查询到议题的内容，可能数据库信息有误.');
                 emitter.emit('TopicContent', res);
             }else{
-                logger.warn('db_operate::getTopicContent - 查询议题内容成功.');
+                //logger.warn('db_operate::getTopicContent - 查询议题内容成功.');
                 res.result = 'success';
                 res.response = content;
                 emitter.emit('TopicContent',res);
@@ -624,7 +753,9 @@ exports.setMeetingStatus= function(status,meetingId){
     });
 };
 
-exports.initMeetingStatus = function(){
+exports.initMeetingStatus= _initMeetingStatus
+
+function _initMeetingStatus (paCallback){
     async.auto({
         get_status:function(callback){
             var multiSql = 'SELECT id,states FROM plc_conference WHERE states <> \'0.0.0\' and states <> \'4.0.0\'';
@@ -632,10 +763,15 @@ exports.initMeetingStatus = function(){
         }
     },function(err,results){
         if(err !== null){
+            paCallback(err,'');
             logger.error('初始化会议状态失败，查询数据库错误！');
         }else{
-            if(results.get_status.length  === 0 )
-               return;
+            if(results.get_status.length  === 0 ){
+                paCallback(null,'');
+                logger.info('当前没有会议进行！');
+                return;
+            }
+
             var res = results.get_status[0];
             var statusArr = res.states.split(".");
             statusManage.setMeetingId(res.id);
@@ -648,12 +784,54 @@ exports.initMeetingStatus = function(){
             else if(statusArr[2] === '2')
                 statusManage.setStatus3ToVotingEnd();
 
+            isSetMeetingStates = 1;
+            if(paCallback !== null){
+                paCallback(null,'');
+            }
             var curStatus = statusManage.getCurrentStatus();
-            logger.trace('初始化会议状态成功，当前会议状态为: ' + curStatus.mainStatus +'.' +
+            logger.info('初始化会议状态成功，当前会议状态为: ' + curStatus.mainStatus +'.' +
             curStatus.topicStatus+ '.'+ curStatus.voteResult  + '   当前会议ID为: ' + statusManage.getMeetingId());
         }
     });
+}
+
+//==================================================================
+//函数名：  getScreenStyle
+//作者：    fengyun
+//日期：    2015-10-23
+//功能：    获取指定会议的大屏风格参数
+//输入参数  会议id,需要回传的风格参数
+//==================================================================
+exports.getScreenStyle= function(plcId,styleBack){
+
+    var condition = ' where conferenceId= ' + plcId;
+
+    async.auto({
+        get_screenStyle : function(callback){
+
+            dbService.selectValueEx('*', t_screenconfigure, condition, callback);
+        }
+    },function(err,results){
+        if(err !== null){
+            styleBack('fail');
+        }else {
+            var data = results["get_screenStyle"];
+
+            var styleConfig = {};
+
+            styleConfig['screen_bg'] = {"background-color":data['backgroundColor']};
+            styleConfig['logo_pos'] = {"text-align":data['logoPosition']};
+            styleConfig['log_src'] = {"src":data['logoUrl']};
+            styleConfig['meeting_title'] = {"color":data['titleColor'],"font-size":data['titleSize']+'px'};
+            styleConfig['meeting_info'] = {"color":data['topicTitleColor'],"font-size":data['topicTitleSize']+'px'};
+
+            logger.trace(styleConfig);
+            styleBack(styleConfig);
+        }
+    });
 };
+
+
 
 
 

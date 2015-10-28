@@ -28,6 +28,8 @@ var cmd_projection = require('./cmd_projection').projection;
 var cmd_meetingOver = require('./cmd_meetingOver').meetingOver;
 var cmd_replyProjection = require('./cmd_replyProjection').replyProjection;
 var cmd_onlyChairmanMode = require('./cmd_onlyChairmanMode').onlyChairmanMode;
+var cmd_powerOff = require('./cmd_powerOff').powerOff;
+var cmd_syncOfficeToWeb = require('./cmd_syncOfficeToWeb').syncOfficeToWeb;
 
 var handle = {};
 /////////////////////////////////////////
@@ -70,6 +72,10 @@ handle['keepAlive'] = cmd_keepAlive;            //0.5h
 handle['meetingOver'] = cmd_meetingOver;
 
 handle['onlyChairmanMode'] = cmd_onlyChairmanMode;
+
+handle['powerOff'] = cmd_powerOff;
+
+handle['syncOfficeToWeb']  = cmd_syncOfficeToWeb;
 
 exports.handles = function(message, socket){
 

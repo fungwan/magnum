@@ -15,7 +15,7 @@ var emitter = new events.EventEmitter();
 
 exports.checkinReply = function(parameters, socket){
 
-    logger.trace('cmd_checkinReply - 收到签到信息 :' +  parameters.mac);
+    //logger.trace('cmd_checkinReply - 收到签到信息 :' +  parameters.mac);
     dbOperate.checkin(parameters.mac,  sendResponse);
 
     function sendResponse(result){
@@ -27,15 +27,15 @@ exports.checkinReply = function(parameters, socket){
                 content:{
                     status:statusManage.getCurrentStatus()
                 }
-            }
+            };
             dbOperate.updateCheckin(sendUpdateCheckin);
-            logger.trace('cmd_checkinReply - 签到成功： ' + parameters.mac);
+
         }else{
             response = {
                 cmd:'checkinReply',
                 result:'fail',
                 content:null
-            }
+            };
             logger.error('cmd_checkinReply - 签到失败： ' + parameters.mac);
         }
         socket.send(jsonFormat.jsonToString(response));
@@ -44,10 +44,19 @@ exports.checkinReply = function(parameters, socket){
     function sendUpdateCheckin(result){
         if(result.result === false){
             //get info fail
+            var _response = {
+                cmd:'checkinReply',
+                result:'fail',
+                content:null
+            };
+            logger.error('cmd_checkinReply - 签到失败： ' + parameters.mac);
+            socket.send(jsonFormat.jsonToString(_response));
+
         }else {
-            //logger.trace('cmd_checkinReply - 获取签到情况成功(已到/未到情况)');
+            logger.info('cmd_checkinReply - 签到成功： ' + parameters.mac);
             logger.trace('cmd_checkinReply - 开始发送签到情况到主席端和Web端(updateCheckin)： ' + jsonFormat.jsonToString(result.jsonObj));
             transponder.messageForwardAll(socket, jsonFormat.jsonToString(result.jsonObj));
+            socket.send(jsonFormat.jsonToString(result.jsonObj));
         }
     };
 }

@@ -19,10 +19,10 @@ var async = require('async'),
 var _query = function(sqlData,callback){
 
     if(sessionPool != null){
-        sessionPool.getConnection('SLAVE*', 'ORDER',function(err, connection) {
+        sessionPool.getConnection(function(err, connection) {//'SLAVE*', 'ORDER',
             if(err){
-				sessionPool.add('SLAVE1', conf.slave1Config);  
-				sessionPool.add('SLAVE2', conf.slave2Config);  
+				//sessionPool.add('SLAVE1', conf.slave1Config);
+				//sessionPool.add('SLAVE2', conf.slave2Config);
 				
                 logger.error(new Date() + "POOL ==> " + err);
                 callback(err, '');
@@ -70,6 +70,7 @@ var service = {
         async.auto({
             query_db: function(_callback){
                 var sqlData = 'SELECT ' + queryValue + ' FROM ' + tableName + ' ' +condition;
+
                 _query(sqlData,_callback);
             },
             get_data: ['query_db',function(_callback ,results) {
@@ -322,7 +323,7 @@ exports.setSessionPool = service._setSessionPool;
 exports.selectValue = service._getOne;//查询一行一列
 exports.selectValueEx = service._getRow;//查询一行，单列/多个列
 exports.selectMulitValue = service._getAll;//查询多行,单列/多个列
-exports.selectMoreValue = service._getUnion;//查询多行,单列/多个列
+exports.selectMoreValue = service._getUnion;//查询更为复杂的查询例如多表
 
 exports.insertValue = service._insertValues;
 exports.replaceValue = service._replaceValues;

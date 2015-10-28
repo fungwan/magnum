@@ -22,7 +22,7 @@ exports.noticeVotingEnded = function(topicId,timerObj){
             //2.send voting result msg to chairman device
             var macArray = [];
             macArray.push(data);
-            macArray.push('WEB-CLIENT');
+            macArray.push('WEB-SCREEN');
 
             //取该议题最终的结果存db
             var resultObj = voteManage.getVoteResult();

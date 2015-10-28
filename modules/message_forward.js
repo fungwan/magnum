@@ -14,13 +14,18 @@ var logger = require('../lib/log.js').logger;
 //输入参数  所需发送人员的mac地址数组、消息内容
 //==================================================================
 exports.messageForward = function(receiver, message){
-    for(var x = 0; x < receiver.length; ++x){
-        var client = ClientList.findSocketByMac(receiver[x]);
-        if(client === null){
-            logger.error('messageforward - 未在终端容器中找到对应的MAC地址的连接对象,不能完成发送，MAC地址为：' + receiver[x]);
-            continue;
+
+    if(receiver instanceof  Array){
+        for(var x = 0; x < receiver.length; ++x){
+            var client = ClientList.findSocketByMac(receiver[x]);
+            if(client === null){
+                logger.error('messageforward - 未在终端容器中找到对应的MAC地址的连接对象,不能完成发送，MAC地址为：' + receiver[x]);
+                continue;
+            }
+            client.send(message);
         }
-        client.send(message);
+    }else{
+        logger.error('message_forward - 广播消息的入口参数不为数组！');
     }
 };
 

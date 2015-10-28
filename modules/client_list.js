@@ -4,6 +4,8 @@
  *  * add a comment. modified by Dexter on 2015/4/7.
  */
 
+var logger = require('../lib/log.js').logger;
+
 module.exports = ClientList;
 
 function ClientList(){
@@ -17,15 +19,52 @@ function ClientList(){
 ClientList.list = [];
 
 ClientList.addClient = function(obj){
-    ClientList.list.push(obj);
+
+    /*
+        因为考虑到web端可以重复添加到用户列表，所以单独code这段逻辑
+     */
+    if(obj.mac === 'WEB-CLIENT' || obj.mac === 'WEB-SCREEN'){
+        ClientList.list.push(obj);
+        return;
+    }
+
+    var _socket = ClientList.findSocketByMac(obj.mac);
+
+    if(_socket === null){
+        ClientList.list.push(obj);
+    }else{
+
+        /*_socket.disconnect();*/
+        ClientList.findClientByMac(obj.mac).socket = obj.socket;
+
+        logger.debug('client_list - 有重复终端登陆，说明上一次并没有完全退出，socket未断开，将其替换');
+
+        /*logger.debug('删除前：' + ClientList.list);
+        ClientList.removeClient(obj.mac,_socket);
+        logger.debug('删除后：' + ClientList.list);
+        ClientList.list.push(obj);
+        logger.debug('再添加后：' + ClientList.list);*/
+    }
+
 };
 
-ClientList.removeClient = function(mac){
+ClientList.removeClient = function(mac,socket){
     for(index in ClientList.list){
-        if(mac === ClientList.list[index].mac){
-            //ClientList.list[index].socket.disconnect();  //不必重复disconnect，亦可规避多个web标签socket异常断开的bug  modify by fengyun 2015/05/25
-            ClientList.list.splice(index,1);
-            break;
+
+        if(mac === 'WEB-CLIENT' || mac === 'WEB-SCREEN'){
+            if(socket === ClientList.list[index].socket){
+                logger.trace('client_list - 有web端断开下线，标签号为：' + mac);
+                socket.disconnect();
+                ClientList.list.splice(index,1);
+                break;
+            }
+        }else{
+            if(mac === ClientList.list[index].mac){
+                logger.trace('client_list - 有终端断开下线，设备号为：' + ClientList.list[index].name);
+                ClientList.list[index].socket.disconnect();
+                ClientList.list.splice(index,1);
+                break;
+            }
         }
     }
 };
@@ -33,7 +72,7 @@ ClientList.removeClient = function(mac){
 ClientList.replaceByMac = function(mac, cli){
     for(index in ClientList.list){
         if(mac === ClientList.list[index].mac){
-            ClientList.list.splice(index,1, cli);
+            ClientList.list[index].time = cli.time;//modify 修改替换函数  by fengyun
             break;
         }
     }
@@ -52,6 +91,15 @@ ClientList.findSocketByMac = function(mac){
 ClientList.findClientBySocket = function(socket){
     for(index in ClientList.list){
         if(socket === ClientList.list[index].socket){
+            return ClientList.list[index];
+        }
+    }
+    return null;
+};
+
+ClientList.findClientByMac = function(mac){
+    for(index in ClientList.list){
+        if(mac === ClientList.list[index].mac){
             return ClientList.list[index];
         }
     }
