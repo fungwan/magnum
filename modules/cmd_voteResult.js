@@ -8,8 +8,6 @@ var logger = require('../lib/log.js').logger;
 var jsonFormat = require('../lib/jsonFormat');
 var transponder = require('./message_forward');
 var voteManage = require('./vote_manage');
-var events = require('events');
-var emitter = new events.EventEmitter();
 var dbOperate = require('./db_operate');
 
 exports.voteResult = function(parameters, socket){
@@ -17,42 +15,32 @@ exports.voteResult = function(parameters, socket){
     voteManage.addVotingCounts();
     voteManage.statisticsVotes(parameters.optionValues);
 
-    var msg = jsonFormat.jsonToString({
-        cmd:'voteResult',
-        parameters:{
-            topicId:parameters.topicId,
-            //optionValues:parameters.optionValues
-            optionValues:voteManage.getVoteResult()
+    dbOperate.updateCheckinLw(checkinInfo);
+
+    function checkinInfo(result){
+        if(result === ''){
+            return false;
         }
-    });
 
-    socket.send(msg);
+        var _allVoter = result;//parseInt(result);
+        var _alreadyVoter = voteManage.getVotingCounts();
 
-    transponder.messageForwardAll(socket, msg);
-
-    logger.debug('cmd_voteResult - 投票实时计算结果转发至主席端和web大屏... ' + voteManage.showVoteResult());
-
-
-    //1.find chairman device
-    /*dbOperate.getChairmanMac(emitter);
-
-    emitter.once('getChairmanMac',function(data){
-        if(data !== ''){
-            //2.send voting result msg to chairman device
-
-            voteManage.addVotingCounts();
-            voteManage.statisticsVotes(parameters.optionValues);
-
-            transponder.messageForwardAll(socket, jsonFormat.jsonToString({
-                cmd:'voteResult',
-                parameters:{
-                    topicId:parameters.topicId,
-                    //optionValues:parameters.optionValues
-                    optionValues:voteManage.getVoteResult()
+        var msg = jsonFormat.jsonToString({
+            cmd:'voteResult',
+            parameters:{
+                topicId:parameters.topicId,
+                optionValues:voteManage.getVoteResult(),
+                voter:{
+                    allVoter:_allVoter,
+                    alreadyVoter:_alreadyVoter
                 }
-            }));
+            }
+        });
 
-            logger.debug('cmd_voteResult - 投票实时计算结果转发至主席端和web大屏... ' + voteManage.showVoteResult());
-        }
-    });*/
+        socket.send(msg);
+        //logger.debug('cmd_voteResult - 投票实时计算结果转发至主席端和web大屏... ' + msg);
+        transponder.messageForwardAll(socket, msg);
+
+        logger.debug('cmd_voteResult - 投票实时计算结果转发至主席端和web大屏... ' + voteManage.showVoteResult());
+    }
 };

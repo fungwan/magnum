@@ -24,13 +24,31 @@ var deviceCounts = 0;
 
 
 var options = {
+    colors: ["#2b908f", "#90ee7e", "#f45b5b", "#7798BF", "#aaeeee", "#ff0066", "#eeaaee",
+        "#55BF3B", "#DF5353", "#7798BF", "#aaeeee"],
     chart: {
         renderTo: 'container',
-        type: 'column'
+        type: 'column',
+        backgroundColor: {
+            linearGradient: { x1: 0, y1: 0, x2: 1, y2: 1 },
+            stops: [
+                [0, '#2a2a2b'],
+                [1, '#3e3e40']
+            ]
+        },
+        style: {
+            fontFamily: "'Unica One', sans-serif"
+        },
+        plotBorderColor: '#606063'
     },
     title: {
              text: '',
-             style:{ "color": "#0000cc", "fontSize": "38px" , "fontWeight":'bold'}
+             //style:{ "color": "#0000cc", "fontSize": "38px" , "fontWeight":'bold'}
+            style: {
+                color: '#E0E0E3',
+                textTransform: 'uppercase',
+                fontSize: '38px'
+            }
     },
     series: [{
 
@@ -38,7 +56,7 @@ var options = {
             dataLabels: {
                 enabled: true,
                 rotation: 0,
-                color: '#ff0000',
+                color: '#B0B0B3',
                 align: 'center',
                 format: '{y} 票',
                 y: 6, // 10 pixels down from the top
@@ -50,19 +68,43 @@ var options = {
     }],
     xAxis: {
             type: 'category',
+            gridLineColor: '#707073',
             labels: {
                 rotation: 0,
                 style: {
                     fontSize: '33px',
                     fontFamily: 'Verdana, sans-serif',
-                    fontWeight:'bold'
+                    fontWeight:'bold',
+                    color: '#E0E0E3'
+                }
+            },
+            lineColor: '#707073',
+            minorGridLineColor: '#505053',
+            tickColor: '#707073',
+            title: {
+                style: {
+                    color: '#A0A0A3'
+
                 }
             }
     },
     yAxis: {
+            gridLineColor: '#707073',
+            labels: {
+                style: {
+                    color: '#E0E0E3'
+                }
+            },
+            lineColor: '#707073',
+            minorGridLineColor: '#505053',
+            tickColor: '#707073',
+            tickWidth: 1,
             min: 0,
             title: {
-                text: '票数'
+                text: '票数',
+                style: {
+                    color: '#A0A0A3'
+                }
             }
      },
      legend: {

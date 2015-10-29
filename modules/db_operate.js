@@ -234,7 +234,7 @@ exports.getMeetingInfo = function(meetingId, mac, emitter){
         },
 
         get_topic: function(callback){
-            var value = 'id,content,type,voteObject';
+            var value = 'id,content,type,voteObject,countdown';
             var condition = 'WHERE conferenceId = ' + meetingId;
             condition += ' ORDER BY orders';
             dbService.selectMulitValue(value, t_topicManagement, condition, callback);
@@ -403,7 +403,33 @@ exports.updateCheckin = function(sendUpdateCheckin){
             }
         }
     });
-}
+};
+
+//==================================================================
+//函数名：  updateCheckinLw
+//作者：    fengyun
+//日期：    2015-04-03
+//功能：    获取已签到多少人
+//输入参数  触发器
+//==================================================================
+exports.updateCheckinLw = function(sendUpdateCheckin){
+    async.auto({
+        get_arrived: function(callback){
+
+            var mulitTable = ' (SELECT memberId from plc_checkin WHERE conferenceId = ' + statusManage.getMeetingId()+' ) as a';
+            var condition = ' WHERE a.memberId NOT IN (SELECT id as memberId from plc_member WHERE conferenceId = ' + statusManage.getMeetingId() + ' and role = 0)';
+            dbService.selectValue('count(a.memberId)',mulitTable, condition, callback);
+        }
+    },function(err,result) {
+        if(err !== null){
+            logger.error('db_operate::updateCheckin() - 查询数据库失败');
+            sendUpdateCheckin('');
+        }else{
+            var arrived = result.get_arrived;
+            sendUpdateCheckin(arrived);
+        }
+    });
+};
 
 //==================================================================
 //函数名：  getMemberInfo

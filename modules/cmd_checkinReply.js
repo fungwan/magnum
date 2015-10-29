@@ -39,7 +39,7 @@ exports.checkinReply = function(parameters, socket){
             logger.error('cmd_checkinReply - 签到失败： ' + parameters.mac);
         }
         socket.send(jsonFormat.jsonToString(response));
-    };
+    }
 
     function sendUpdateCheckin(result){
         if(result.result === false){
@@ -58,5 +58,5 @@ exports.checkinReply = function(parameters, socket){
             transponder.messageForwardAll(socket, jsonFormat.jsonToString(result.jsonObj));
             socket.send(jsonFormat.jsonToString(result.jsonObj));
         }
-    };
-}
+    }
+};
