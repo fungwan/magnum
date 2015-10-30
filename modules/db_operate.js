@@ -83,7 +83,7 @@ exports.logon = function(mac, logonReply){
             var memberId = results.get_memberId;//看有无此人员信息在该会议中
             if(memberId === ''){
 
-                logger.error('db_operate::logon() - 当前状态有会议，但在数据库中未查询到此终端的会议信息,mac为：' + mac);
+                logger.error('db_operate::logon() - 当前状态有会议，但在数据库中未查询到此终端的会议信息,终端mac为：' + mac);
                 callback('No InMeeting',seatNo);
 
             }else{

@@ -26,13 +26,17 @@ exports.startVote = function(parameters, socket){
         if(result.result === 'success'){
 
             var topicDetail = result.response;
+
+            //初始化该议题的投票结果
+            voteManage.initVoteResults(topicDetail.type,topicDetail.voteObject);
+
             transponder.messageForwardAll(socket, jsonFormat.jsonToString({
                      cmd:'startVote',
                      parameters:{
                      topicId:parameters.topicId,
                      content:topicDetail.content,
                      type:topicDetail.type,
-                     voteObject:topicDetail.voteObject
+                     voteObject:voteManage.getVoteResult()
                  }
              }));
 
@@ -43,9 +47,7 @@ exports.startVote = function(parameters, socket){
                 }
             }));
 
-            //初始化该议题的投票结果
-            voteManage.initVoteResults(topicDetail.type,topicDetail.voteObject);
-
+            voteManage.clearVotingCounts();
             statusManage.setStatus3ToVoting();//meeting status is changed to voting...
             dbOperate.setMeetingStatus(statusManage.showCurrentStatus(),statusManage.getMeetingId());
 

@@ -34,6 +34,19 @@ exports.addVotingCounts = function(){
 };
 
 //==================================================================
+//函数名：  clearVotingCounts
+//作者：    andy.feng
+//日期：    2015-10-29
+//功能：    清空上次投票计数
+//输入参数
+//返回值：
+//修改记录：
+//==================================================================
+exports.clearVotingCounts = function(){
+    votingCounts = 0;
+};
+
+//==================================================================
 //函数名：  getVotingCounts
 //作者：    andy.feng
 //日期：    2015-04-03
@@ -185,8 +198,8 @@ exports.initVoteResults = function(type,options){
 
     voteObject = options;
 
-    var voteArrary = voteObject.split(',');
-    for(x in voteArrary){
-        voteResult[voteArrary[x]] = 0;
+    var voteArray = voteObject.split(',');
+    for(x in voteArray){
+        voteResult[voteArray[x]] = 0;
     }
 };

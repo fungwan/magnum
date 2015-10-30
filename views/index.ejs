@@ -15,7 +15,7 @@
 
         #no_arrived{color:red;}
 
-        #meetingInfo {
+        #meetingInfo,#overInfo {
             margin-top:10%
         }
 
@@ -39,7 +39,7 @@
 
          { font-size:14px; }
 
-        #overInfo {display: none; font-size:70px; color: red}
+        #overInfo > p{ font-size:70px; color: red}
 
     </style>
 
@@ -74,7 +74,6 @@
         <div id="topicInfo" style="display:none;">
             <p>议题: <%= content %></p>
         </div>
-        <div id = "overInfo">会议已结束！</div>
     </div>
 
     <%}else {%>
@@ -87,14 +86,13 @@
         <div id="topicInfo">
             <p>议题: <%= content %></p>
         </div>
-        <div id = "overInfo">会议已结束！</div>
     </div>
 
     <%}%>
     <!-- meeting info && topic info End -->
 
     <div>
-        <br>
+        <br><div id = "overInfo" style="display:none;"><p>会议已结束！</p></div>
     </div>
 
     <!-- vote statistics start -->

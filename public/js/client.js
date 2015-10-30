@@ -152,7 +152,6 @@ $(function(){               // equal $(document).ready(function(){})
             }
         }
         else if(messageType === 'updateCheckin'){
-
             var data = jsonObj.parameters;
 
             if(isStarted === 0){
@@ -166,7 +165,6 @@ $(function(){               // equal $(document).ready(function(){})
             }
 
         }else if(messageType === 'startMeeting'){
-
             $("#checkinInfo").css({'display':'none'});
             $(".avatar_projection").css({'display':'none'});
             $("#syncOfficeToWeb").css({'display':'none'});
@@ -181,12 +179,12 @@ $(function(){               // equal $(document).ready(function(){})
             var data = jsonObj.parameters;
 
             isStarted = 2;
-
             $("#checkinInfo").css({'display':'none'});
             $(".avatar_projection").css({'display':'none'});
             $("#vod_projection").css({'display':'none'});
             $("#statistics").css({'display':'none'});
             $("#syncOfficeToWeb").css({'display':'none'});
+            $("#meetingInfo").css({'display':''});
             $("#topicInfo").css({'display':''});
 
             var topicName = data.content;
@@ -197,12 +195,12 @@ $(function(){               // equal $(document).ready(function(){})
         }else if(messageType === 'startVote'){
 
             var data = jsonObj.parameters;
-
             $("#checkinInfo").css({'display':'none'});
             $(".avatar_projection").css({'display':'none'});
             $("#vod_projection").css({'display':'none'});
             $("#statistics").css({'display':'none'});
             $("#syncOfficeToWeb").css({'display':'none'});
+            $("#meetingInfo").css({'display':''});
             $("#topicInfo").css({'display':''});
             isShowVoteResults = 0;
 
@@ -211,13 +209,13 @@ $(function(){               // equal $(document).ready(function(){})
             var topicName = data.content;
             var voteObject = data.voteObject;
             var voteType = data.type;
-            if(voteType === 2){
-                voteObject = voteObject.replace(/:[0-9]+/,'');
-            }
-            var voteArrary = voteObject.split(',');
+//            if(voteType === 2){
+//                voteObject = voteObject.replace(/:[0-9]+/,'');
+//            }
+//            var voteArrary = voteObject.split(',');
             var tmpArrary = [];
-            for(x in voteArrary){
-                tmpArrary.push([voteArrary[x],0]);//'0票'
+            for(x in voteObject){
+                tmpArrary.push([x,0]);//'0票'
             }
 
             options.title['text'] = topicName;
@@ -241,7 +239,6 @@ $(function(){               // equal $(document).ready(function(){})
             options.series[0].data = showData;
             var series = hightChart.series[0];
             series.setData(showData, true, true);
-
             if(isShowVoteResults === 1){
                 $("#checkinInfo").css({'display':'none'});
                 $(".avatar_projection").css({'display':'none'});
@@ -252,7 +249,7 @@ $(function(){               // equal $(document).ready(function(){})
             }
 
         }else if(messageType === 'votingEnded'){
-
+            $("#meetingInfo").css({'display':''});
             $("#checkinInfo").css({'display':'none'});
             $("#topicInfo").css({'display':''});
             $(".avatar_projection").css({'display':'none'});
@@ -265,8 +262,7 @@ $(function(){               // equal $(document).ready(function(){})
             $("#syncOfficeToWeb").css({'display':'none'});
             $("#vod_projection").css({'display':'none'});
             $("#statistics").css({'display':'none'});
-            $("#checkinInfo").css({'display':'none'});
-            $("#topicInfo").css({'display':'none'});
+            $("#meetingInfo").css({'display':'none'});
             $("#overInfo").css({'display':''});
             isStarted = 0;
             isShowVoteResults = 0;
@@ -274,8 +270,8 @@ $(function(){               // equal $(document).ready(function(){})
 
         }else if(messageType === 'projection'){
 
-            var data = jsonObj.parameters;
             $("#meetingInfo").css({'display':'none'});
+            var data = jsonObj.parameters;
             if(data.type === 'playVideo'){
                 $(".avatar_projection").css({'display':'none'});
                 $("#statistics").css({'display':'none'});//control statistics display
@@ -301,7 +297,7 @@ $(function(){               // equal $(document).ready(function(){})
                 $("#statistics").css({'display':'none'});
                 $("#vod_projection").css({'display':'none'});
                 $("#syncOfficeToWeb").css({'display':'none'});
-                $(".header-bg").css({'display':'none'});
+                //$(".header-bg").css({'display':'none'});
                 $(".avatar_projection").css({'display':''});
                 $(".avatar_projection").empty();
                 $(".avatar_projection").removeAttr("style");
@@ -312,9 +308,10 @@ $(function(){               // equal $(document).ready(function(){})
                 for(x in macArrary){
                     if(deviceCounts === 1){
                         var html = '';
-                        html ='<div style="width:100%;height:100%; text-align:center"';
-                        html += '><img  id="loadingfullscreen" src="images/loading.gif"';//style="width:100%;height:100%;"
-                        html += ">";
+                        html ='<div style="width:100%;height:99%;position:absolute;top:0;left:0"';
+                        //html += "><div id='loadingfullscreen'";
+                        html += '><p id="loadingfullscreen" style="margin:0 auto;color: #3399ff;font-size: 40px;font-weight:bold  ;position:relative; top:50%; "';//#
+                        html += ">Loading....</p>";
                         html += '<embed style="width:3px; height:3px;border: 1px solid rgb(206, 179, 179);" toolbar="false" autostart="true" type="application/x-vlc-plugin" pluginspage="http://www.videolan.org"';
                         html += 'version="VideoLAN.VLCPlugin.2" id="vlc_' +  macArrary[x] + '"';
                         html += ">";
@@ -328,9 +325,10 @@ $(function(){               // equal $(document).ready(function(){})
                         var html = '';
                         html ='<div class="video" ';//text-align:center
                         html += 'style="display: inline-block; opacity: 1; margin:3px;"';
-                        html += ">";
-                        html += '<img class="loading" src="images/loading.gif"';
-                        html += ">";
+                        html += "><div class='loading'";
+                        //html += '><img src="images/loading.png"';
+                        html += '><p style="margin:0 auto;color: #3399ff;font-size: 40px;font-weight:bold  ;position:relative; top:50%; "';//#
+                        html += ">Loading...</p></div>";
                         html += '<embed style="width:3px;height:3px;border: 1px solid rgb(206, 179, 179);" toolbar="false" autostart="true" type="application/x-vlc-plugin" pluginspage="http://www.videolan.org"';
                         html += 'version="VideoLAN.VLCPlugin.2" id="vlc_' +  macArrary[x] + '"';
                         html += ">";
@@ -455,8 +453,8 @@ $(function(){               // equal $(document).ready(function(){})
             $("#vod_projection").css({'display':'none'});
             $("#statistics").css({'display':'none'});
             $("#syncOfficeToWeb").css({'display':'none'});
+            //$(".header-bg").css({'display':''});
             $("#meetingInfo").css({'display':''});
-            $(".header-bg").css({'display':''});
             window.clearInterval(timer); //清楚定时器
             if(isStarted === 0){
                 $("#checkinInfo").css({'display':''});

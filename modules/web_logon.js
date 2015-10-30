@@ -98,7 +98,8 @@ exports.web_logon = function(req,res){
                             content:' 还未开始',
                             arrived:0,
                             notArrived:0,
-                            ip :ipAddress});
+                            ip :ipAddress,
+                            screenStyle:strPlcStyle});
                         return;
                     }
 
