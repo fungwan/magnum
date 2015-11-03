@@ -142,6 +142,7 @@ $(function(){               // equal $(document).ready(function(){})
             var sec = statusObj.topicStatus;
 
             if(main < 3 ){
+
                 isStarted = 0;//checkin
             }else{
                 if(sec === 0){
@@ -150,8 +151,41 @@ $(function(){               // equal $(document).ready(function(){})
                     isStarted = 2;//topic is ing.
                 }
             }
-        }
-        else if(messageType === 'updateCheckin'){
+        }else if(messageType === 'checkin'){
+
+            $("#overInfo").css({'display':'none'});
+            $("#noMeeting").css({'display':'none'});
+            $("#topicInfo").css({'display':'none'});
+            $("#meetingInfo").css({'display':''});
+
+            var data = jsonObj.parameters;
+            var styleJsonObj = data.forWebScreen;
+
+            var ip = $("#ip").text();
+            var logoUrl = 'http://' + ip + ':8080';
+            if(styleJsonObj['name'] === undefined && styleJsonObj['arrived'] === undefined){
+                alert('后台服务器出错，请尝试刷新界面...');
+                return;
+            }
+
+            $("#meetingInfo > h1").text(styleJsonObj['name']);
+            $("body").css(styleJsonObj['screen_bg']);
+            var imgUrl = logoUrl + styleJsonObj['log_src']['src'];
+            styleJsonObj['log_src']['src'] = imgUrl;
+            $("#meetingLogo").attr(styleJsonObj['log_src']);
+
+            $(".header-bg").css(styleJsonObj['logo_pos']);
+
+            $("#meetingInfo > h1").css(styleJsonObj['meeting_title']);
+
+            $("#checkinInfo > p").css(styleJsonObj['meeting_info']);
+            $("#topicInfo > p").css(styleJsonObj['meeting_info']);
+
+            $("#arrived").text(styleJsonObj['arrived']);
+            $("#no_arrived").text(styleJsonObj['notArrived']);
+
+
+        }else if(messageType === 'updateCheckin'){
             var data = jsonObj.parameters;
 
             if(isStarted === 0){
@@ -209,10 +243,6 @@ $(function(){               // equal $(document).ready(function(){})
             var topicName = data.content;
             var voteObject = data.voteObject;
             var voteType = data.type;
-//            if(voteType === 2){
-//                voteObject = voteObject.replace(/:[0-9]+/,'');
-//            }
-//            var voteArrary = voteObject.split(',');
             var tmpArrary = [];
             for(x in voteObject){
                 tmpArrary.push([x,0]);//'0票'
@@ -266,7 +296,7 @@ $(function(){               // equal $(document).ready(function(){})
             $("#overInfo").css({'display':''});
             isStarted = 0;
             isShowVoteResults = 0;
-            socket.disconnect();
+            //socket.disconnect();
 
         }else if(messageType === 'projection'){
 

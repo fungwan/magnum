@@ -43,7 +43,12 @@ exports.web_logon = function(req,res){
         get_checkinInfo: ['get_status',function(callback, results){
             if(results.get_status.length  === 0 ){
                 //no meeting
-                res.send(404,'当前没有会议！');
+                res.render('index',{title:conferenceName,
+                    content:'',
+                    arrived:0,
+                    notArrived:0,
+                    ip :ipAddress,
+                    screenStyle:''});
                 return;
             }
             var resValues = results.get_status[0];

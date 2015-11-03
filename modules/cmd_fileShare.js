@@ -15,7 +15,8 @@ exports.fileShare = function(parameters, socket){
         parameters:{
             senderId:parameters.senderId,
             fileName:parameters.fileName,
-            fileUrl:parameters.fileUrl
+            fileUrl:parameters.fileUrl,
+            fileLength:parameters.fileLength
         }
     }
     logger.debug('cmd_fileShare - 开始发送文件共享消息：' + jsonFormat.jsonToString(response));

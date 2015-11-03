@@ -347,6 +347,7 @@ exports.checkin = function (mac, sendResponse) {
 //日期：    2015-04-03
 //功能：    获取已签到多少人，未签到多少人
 //输入参数  触发器
+//modify by fengyun cancel get chairman info
 //==================================================================
 exports.updateCheckin = function(sendUpdateCheckin){
     async.auto({
@@ -368,13 +369,13 @@ exports.updateCheckin = function(sendUpdateCheckin){
         get_AllNum: [function(callback, results){
             var condition = 'WHERE conferenceId = ' + statusManage.getMeetingId() +  ' and role != 0';
             dbService.selectValue('count(*)',t_member, condition, callback);
-        }],
-        get_chairmanMac:[function(callback, results){
-            var sql = 'SELECT plc_device.mac FROM plc_device,' +
-                ' (SELECT deviceId FROM  plc_member WHERE role = 2 ) as device ' +
-                'WHERE plc_device.id = device.deviceId';
-            dbService.selectMoreValue(sql, callback);
         }]
+//        get_chairmanMac:[function(callback, results){
+//            var sql = 'SELECT plc_device.mac FROM plc_device,' +
+//                ' (SELECT deviceId FROM  plc_member WHERE role = 2 ) as device ' +
+//                'WHERE plc_device.id = device.deviceId';
+//            dbService.selectMoreValue(sql, callback);
+//        }]
     },function(err,result) {
         var res = {};
         if(err !== null){
@@ -382,25 +383,26 @@ exports.updateCheckin = function(sendUpdateCheckin){
             res.result = false;
             sendUpdateCheckin(res);
         }else{
-            if(result.get_chairmanMac === ''){
-                logger.error('db_operate::updateCheckin() - 查询主席端MAC地址失败，可能数据库内容有误');
-                res.result = false;
-                sendUpdateCheckin(res);
-            }else{
-                var arrived = result.get_arrived;
-                var allNum = result.get_AllNum;
-                var response = {
-                    cmd:'updateCheckin',
-                    parameters:{
-                        arrived:arrived,
-                        notArrived:allNum - arrived
-                    }
-                };
-                res.result = true;
-                res.jsonObj = response;
-                res.mac = result.get_chairmanMac[0].mac;
-                sendUpdateCheckin(res);
-            }
+//            if(result.get_chairmanMac === ''){
+//                logger.error('db_operate::updateCheckin() - 查询主席端MAC地址失败，可能数据库内容有误');
+//                res.result = false;
+//                sendUpdateCheckin(res);
+//            }else{
+//
+//            }
+            var arrived = result.get_arrived;
+            var allNum = result.get_AllNum;
+            var response = {
+                cmd:'updateCheckin',
+                parameters:{
+                    arrived:arrived,
+                    notArrived:allNum - arrived
+                }
+            };
+            res.result = true;
+            res.jsonObj = response;
+            //res.mac = result.get_chairmanMac[0].mac;
+            sendUpdateCheckin(res);
         }
     });
 };
@@ -858,6 +860,48 @@ exports.getScreenStyle= function(plcId,styleBack){
 };
 
 
+//==================================================================
+//函数名：  getScreenStyle
+//作者：    fengyun
+//日期：    2015-10-23
+//功能：    获取指定会议的大屏风格参数
+//输入参数  会议id,需要回传的风格参数
+//==================================================================
+exports.getPlcNameAndStyle= function(plcId,styleBack){
+
+//    SELECT meeting.name,conf.logoUrl,conf.logoPosition, conf.backgroundColor ,conf.titleColor,conf.titleSize,conf.titleColor,conf.topicTitleSize
+//
+//    from plc_screenconfigure as conf RIGHT JOIN (SELECT id,name from plc_conference WHERE id = 1428564574957) as meeting
+//
+//    on conf.conferenceId = meeting.id;
+
+    var sql = 'SELECT meeting.name,conf.logoUrl,conf.logoPosition, conf.backgroundColor ,conf.titleColor,conf.titleSize,conf.topicTitleColor,conf.topicTitleSize ';
+        sql += 'from plc_screenconfigure as conf RIGHT JOIN (SELECT id,name from plc_conference WHERE id= ' + plcId + ') as meeting on conf.conferenceId = meeting.id;';
+
+    async.auto({
+        get_screenStyleEx : function(callback){
+
+            dbService.selectMoreValue(sql,  callback);
+        }
+    },function(err,results){
+        if(err !== null){
+            styleBack('fail');
+        }else {
+            var tmpArray = results["get_screenStyleEx"];
+            var data = tmpArray[0];
+            var styleConfig = {};
+
+            styleConfig['name'] = data['name'];
+            styleConfig['screen_bg'] = {"background-color":data['backgroundColor']};
+            styleConfig['logo_pos'] = {"text-align":data['logoPosition']};
+            styleConfig['log_src'] = {"src":data['logoUrl']};
+            styleConfig['meeting_title'] = {"color":data['titleColor'],"font-size":data['titleSize']+'px'};
+            styleConfig['meeting_info'] = {"color":data['topicTitleColor'],"font-size":data['topicTitleSize']+'px'};
+
+            styleBack(styleConfig);
+        }
+    });
+};
 
 
 

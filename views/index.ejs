@@ -15,7 +15,7 @@
 
         #no_arrived{color:red;}
 
-        #meetingInfo,#overInfo {
+        #meetingInfo,#overInfo,#noMeeting {
             margin-top:10%
         }
 
@@ -36,8 +36,6 @@
                          /*color: #00BFFF}*/
 
         /*#topicInfo > p {font-size:70px;}*/
-
-         { font-size:14px; }
 
         #overInfo > p{ font-size:70px; color: red}
 
@@ -61,7 +59,18 @@
     <% if(title === '' && content === ''){%>
 
     <div id="noMeeting">
-        <h2>当前没有会议,请稍后刷新再试！否则显示有误</h2><br>
+        <img id="noMeetingLogo" src="/images/noMeeting.png" alt=" ">
+        <h1><p>当前没有会议!<p></h1>
+    </div>
+
+    <div id="meetingInfo" style="display:none;">
+        <h1></h1>
+        <div id = "checkinInfo">
+            <p>签到信息：已到<span id = "arrived">0</span>人,未到<span id = "no_arrived">0</span>人</p>
+        </div>
+        <div id="topicInfo" style="display:none;">
+            <p>议题: </p>
+        </div>
     </div>
 
     <%}else if(title !== '' && content === ''){%>
@@ -117,7 +126,7 @@
     <div id="vod_projection" style="display: none; width:100%;height:100%;position: absolute; top: 0; left: 0;background-color:black;">
     </div>
 
-    <img id = "syncOfficeToWeb" src="images/bk.png" height="100%" width="100%" style="display: none; position: absolute; top: 0; left: 0;"/>
+    <img id = "syncOfficeToWeb" src="" height="100%" width="100%" style="display: none; position: absolute; top: 0; left: 0;"/>
 
     <span id = "ip" style="display: none"><%= ip %></span>
     <span id = "screenStyle" style="display: none"><%= screenStyle %></span>
@@ -156,7 +165,14 @@
 
     }catch (err){
         console.error('screenStyle json decode error...');
-        //return false;
+        $("#meetingLogo").attr({"src":"/images/logo.png"});
+
+        $(".header-bg").css({"text-align":"left"});
+
+        $("#meetingInfo > h1").css({"color":"#992B00","font-size":"120px"});
+
+        $("#checkinInfo > p").css({"font-size":"80px"});
+        $("#topicInfo > p").css({"font-size":"80px"});
     }
 
 </script>
