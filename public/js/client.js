@@ -114,7 +114,6 @@ var options = {
 };
 
 $(function(){               // equal $(document).ready(function(){})
-
     var ip = $("#ip").text();
 
     //socket.io
@@ -157,6 +156,7 @@ $(function(){               // equal $(document).ready(function(){})
             $("#noMeeting").css({'display':'none'});
             $("#topicInfo").css({'display':'none'});
             $("#meetingInfo").css({'display':''});
+            $("#checkinInfo").css({'display':''});
 
             var data = jsonObj.parameters;
             var styleJsonObj = data.forWebScreen;
@@ -293,6 +293,8 @@ $(function(){               // equal $(document).ready(function(){})
             $("#vod_projection").css({'display':'none'});
             $("#statistics").css({'display':'none'});
             $("#meetingInfo").css({'display':'none'});
+            $("#checkinInfo").css({'display':'none'});
+            $("#topicInfo").css({'display':'none'});
             $("#overInfo").css({'display':''});
             isStarted = 0;
             isShowVoteResults = 0;
@@ -340,8 +342,9 @@ $(function(){               // equal $(document).ready(function(){})
                         var html = '';
                         html ='<div style="width:100%;height:99%;position:absolute;top:0;left:0"';
                         //html += "><div id='loadingfullscreen'";
-                        html += '><p id="loadingfullscreen" style="margin:0 auto;color: #3399ff;font-size: 40px;font-weight:bold  ;position:relative; top:50%; "';//#
-                        html += ">Loading....</p>";
+                        html += '><img id="loadingfullscreen" src="images/loading.gif" style="margin:0 auto;position:relative; top:40%; "'+'>';
+                        //html += '><p id="loadingfullscreen" style="margin:0 auto;color: #3399ff;font-size: 40px;font-weight:bold  ;position:relative; top:50%; "';//#
+                        //html += ">加载中</p>";
                         html += '<embed style="width:3px; height:3px;border: 1px solid rgb(206, 179, 179);" toolbar="false" autostart="true" type="application/x-vlc-plugin" pluginspage="http://www.videolan.org"';
                         html += 'version="VideoLAN.VLCPlugin.2" id="vlc_' +  macArrary[x] + '"';
                         html += ">";
@@ -355,10 +358,10 @@ $(function(){               // equal $(document).ready(function(){})
                         var html = '';
                         html ='<div class="video" ';//text-align:center
                         html += 'style="display: inline-block; opacity: 1; margin:3px;"';
-                        html += "><div class='loading'";
-                        //html += '><img src="images/loading.png"';
-                        html += '><p style="margin:0 auto;color: #3399ff;font-size: 40px;font-weight:bold  ;position:relative; top:50%; "';//#
-                        html += ">Loading...</p></div>";
+                        html += "><div class='loading' style='border: 1px solid rgb(206, 179, 179);'";
+                        html += '><img src="images/loading.gif" style="margin:0 auto;position:relative; top:40%; "'+'></div>';
+                        //html += '><p style="margin:0 auto;color: #3399ff;font-size: 40px;font-weight:bold  ;position:relative; top:50%; "';//#
+                        //html += ">加载中</p></div>";
                         html += '<embed style="width:3px;height:3px;border: 1px solid rgb(206, 179, 179);" toolbar="false" autostart="true" type="application/x-vlc-plugin" pluginspage="http://www.videolan.org"';
                         html += 'version="VideoLAN.VLCPlugin.2" id="vlc_' +  macArrary[x] + '"';
                         html += ">";
@@ -375,8 +378,11 @@ $(function(){               // equal $(document).ready(function(){})
                     var documentHeight = $(document).height();
                     var contentWidth = documentWidth - documentWidth*0.1;
                     var contentHeight = documentHeight - documentHeight*0.1;
+                    var whRate = 480/363;
 
-                    if(embedLength < 4){
+                    $(".gallery").css("margin-top", "2%");
+
+                    if(embedLength == 2){
                         embedLength = embedLength%4;
                         var embedWidth = contentWidth/embedLength;
                         var embedHeight = embedWidth*0.75;
@@ -384,71 +390,19 @@ $(function(){               // equal $(document).ready(function(){})
                             $(embeds[i]).css("width", embedWidth);
                             $(embeds[i]).css("height", embedHeight);
                         }
-                    }else if(embedLength === 4){
-
-                        var embedHeight = contentHeight/2 ;
-                        var embedWidth = contentWidth/2;
-                        for(var i=0;i<embedLength;i++){
-                            $(embeds[i]).css("width", embedWidth);
-                            $(embeds[i]).css("height", embedHeight);
-
-                        }
-                    }else if(embedLength === 5){
-                        var embedHeight = contentHeight/2 ;
-                        var embedWidth1 = contentWidth/3;
-                        var embedWidth2 = embedWidth1*3 / 2;
-                        for(var i=0;i<embedLength;i++){
-                            if(i<=2){
-                                $(embeds[i]).css("width", embedWidth1);
-                            }else if(i>2){
-                                $(embeds[i]).css("width", embedWidth2);
-                            }
-
-                            $(embeds[i]).css("height", embedHeight);
-
-                        }
-                    }else if(embedLength === 6){
-
-                        var embedHeight = contentHeight/2 ;
+                    }else if(embedLength === 3 || embedLength === 4 || embedLength === 5 || embedLength === 6){
                         var embedWidth = contentWidth/3;
-
+                        var embedHeight = embedWidth/whRate;
                         for(var i=0;i<embedLength;i++){
                             $(embeds[i]).css("width", embedWidth);
                             $(embeds[i]).css("height", embedHeight);
 
                         }
-                    }
-                    else if(embedLength === 7){
 
-                        var embedHeight = contentHeight/2 ;
-                        var embedWidth1 = contentWidth/4 ;
-                        var embedWidth2 = embedWidth1*4/3;
-
-                        for(var i=0;i<embedLength;i++){
-                            if(i <=3){
-                                $(embeds[i]).css("width", embedWidth1);
-                            }else {
-                                $(embeds[i]).css("width", embedWidth2);
-                            }
-
-                            $(embeds[i]).css("height", embedHeight);
-
-                        }
-                    }else if(embedLength === 8){
-
-                        var embedHeight = contentHeight/2 ;
+                    }else if(embedLength === 7 || embedLength === 8){
+                        $(".gallery").css("margin-top", "5%");
                         var embedWidth = contentWidth/4;
-
-                        for(var i=0;i<embedLength;i++){
-                            $(embeds[i]).css("width", embedWidth);
-                            $(embeds[i]).css("height", embedHeight);
-
-                        }
-                    }else if(embedLength === 9){
-
-                        var embedHeight = contentHeight/3;
-                        var embedWidth = contentWidth/3;
-
+                        var embedHeight = embedWidth/whRate;
                         for(var i=0;i<embedLength;i++){
                             $(embeds[i]).css("width", embedWidth);
                             $(embeds[i]).css("height", embedHeight);
@@ -529,8 +483,9 @@ function showVideo(){
                 var documentHeight = $(document).height();
                 var contentWidth = documentWidth - documentWidth*0.1;
                 var contentHeight = documentHeight - documentHeight*0.1;
+                var whRate = 480/363;
 
-                if(embedLength < 4){
+                if(embedLength == 2){
                     embedLength = embedLength%4;
                     var embedWidth = contentWidth/embedLength;
                     var embedHeight = embedWidth*0.75;
@@ -538,71 +493,18 @@ function showVideo(){
                         $(embeds[i]).css("width", embedWidth);
                         $(embeds[i]).css("height", embedHeight);
                     }
-                }else if(embedLength === 4){
-
-                    var embedHeight = contentHeight/2 ;
-                    var embedWidth = contentWidth/2;
-                    for(var i=0;i<embedLength;i++){
-                        $(embeds[i]).css("width", embedWidth);
-                        $(embeds[i]).css("height", embedHeight);
-
-                    }
-                }else if(embedLength === 5){
-                    var embedHeight = contentHeight/2 ;
-                    var embedWidth1 = contentWidth/3;
-                    var embedWidth2 = embedWidth1*3 / 2;
-                    for(var i=0;i<embedLength;i++){
-                        if(i<=2){
-                            $(embeds[i]).css("width", embedWidth1);
-                        }else if(i>2){
-                            $(embeds[i]).css("width", embedWidth2);
-                        }
-
-                        $(embeds[i]).css("height", embedHeight);
-
-                    }
-                }else if(embedLength === 6){
-
-                    var embedHeight = contentHeight/2 ;
+                }else if(embedLength === 3 || embedLength === 4 || embedLength === 5 || embedLength === 6){
                     var embedWidth = contentWidth/3;
-
+                    var embedHeight = embedWidth/whRate;
                     for(var i=0;i<embedLength;i++){
                         $(embeds[i]).css("width", embedWidth);
                         $(embeds[i]).css("height", embedHeight);
 
                     }
-                }
-                else if(embedLength === 7){
 
-                    var embedHeight = contentHeight/2 ;
-                    var embedWidth1 = contentWidth/4 ;
-                    var embedWidth2 = embedWidth1*4/3;
-
-                    for(var i=0;i<embedLength;i++){
-                        if(i <=3){
-                            $(embeds[i]).css("width", embedWidth1);
-                        }else {
-                            $(embeds[i]).css("width", embedWidth2);
-                        }
-
-                        $(embeds[i]).css("height", embedHeight);
-
-                    }
-                }else if(embedLength === 8){
-
-                    var embedHeight = contentHeight/2 ;
+                }else if(embedLength === 7 || embedLength === 8){
                     var embedWidth = contentWidth/4;
-
-                    for(var i=0;i<embedLength;i++){
-                        $(embeds[i]).css("width", embedWidth);
-                        $(embeds[i]).css("height", embedHeight);
-
-                    }
-                }else if(embedLength === 9){
-
-                    var embedHeight = contentHeight/3;
-                    var embedWidth = contentWidth/3;
-
+                    var embedHeight = embedWidth/whRate;
                     for(var i=0;i<embedLength;i++){
                         $(embeds[i]).css("width", embedWidth);
                         $(embeds[i]).css("height", embedHeight);
