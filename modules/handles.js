@@ -4,6 +4,7 @@
 
 var logger = require('../lib/log.js').logger;
 var jsonFormat = require('../lib/jsonFormat');
+var statusManage = require('./status_manage');
 var cmd_logon = require('./cmd_logon').logon;
 var cmd_startCheckin = require('./cmd_startCheckin').startCheckin;
 var cmd_meetingInfo = require('./cmd_meetingInfo').meetingInfo;
@@ -30,6 +31,7 @@ var cmd_replyProjection = require('./cmd_replyProjection').replyProjection;
 var cmd_onlyChairmanMode = require('./cmd_onlyChairmanMode').onlyChairmanMode;
 var cmd_powerOff = require('./cmd_powerOff').powerOff;
 var cmd_syncOfficeToWeb = require('./cmd_syncOfficeToWeb').syncOfficeToWeb;
+
 
 var handle = {};
 /////////////////////////////////////////
@@ -79,11 +81,18 @@ handle['syncOfficeToWeb']  = cmd_syncOfficeToWeb;
 
 exports.handles = function(message, socket){
 
+    var currentStatus = statusManage.getCurrentStatus();
     var jsonObj = jsonFormat.stringToJson(message);
     if(jsonObj === null)
         return;
 
     if (typeof handle[jsonObj.cmd] === 'function'){
+
+        var recCmd = jsonObj.cmd;
+        if(currentStatus === '0.0.0' && recCmd !== 'startCheckin' && recCmd !== 'logon'){
+            return;
+        }
+
         handle[jsonObj.cmd](jsonObj.parameters, socket);
     }
 };

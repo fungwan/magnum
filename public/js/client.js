@@ -17,7 +17,7 @@ var showData = [];//柱状图控件的加载数据
 var isShowVoteResults = 0;//控制是否大屏幕显示投票信息
 var isStarted = 0;//会议中的状态0：未开始，1：会议开始但议题未进行，2:会议开始议题进行中
 var timer = 0;//控制定时显示video的定时器
-
+var storage;
 var arrived = 0;
 var no_arrived = 0;
 var deviceCounts = 0;
@@ -114,6 +114,16 @@ var options = {
 };
 
 $(function(){               // equal $(document).ready(function(){})
+
+    if(window.localStorage){
+
+        storage = window.localStorage;
+
+    }else{
+        alert('该浏览器不支持localStorage属性，请更换高版本浏览器!');
+        return;
+    }
+
     var ip = $("#ip").text();
 
     //socket.io
@@ -207,6 +217,7 @@ $(function(){               // equal $(document).ready(function(){})
             $("#topicInfo").css({'display':''});
             isStarted = 1;
             $("#topicInfo > p").text('会议已开始，但议题未进行');
+            localStorage.clear();
 
         }else if(messageType === 'changeTopic'){
 
@@ -254,6 +265,16 @@ $(function(){               // equal $(document).ready(function(){})
             showData = tmpArrary;
             hightChart = new Highcharts.Chart(options);
 
+            var _voteObject = {
+                name:topicName,
+                data:showData
+            };
+
+            var _voteStr;
+            _voteStr = JSON.stringify(_voteObject);
+
+            localStorage.setItem(data.topicId,_voteStr);
+
         }else if(messageType === 'voteResult'){
 
             var data = jsonObj.parameters;
@@ -278,6 +299,16 @@ $(function(){               // equal $(document).ready(function(){})
                 $("#statistics").css({'display':''});
             }
 
+            var _voteObject = {
+                name:options.title['text'],
+                data:showData
+            };
+
+            var _voteStr;
+            _voteStr = JSON.stringify(_voteObject);
+
+            localStorage.setItem(data.topicId,_voteStr);
+
         }else if(messageType === 'votingEnded'){
             $("#meetingInfo").css({'display':''});
             $("#checkinInfo").css({'display':'none'});
@@ -298,6 +329,7 @@ $(function(){               // equal $(document).ready(function(){})
             $("#overInfo").css({'display':''});
             isStarted = 0;
             isShowVoteResults = 0;
+            localStorage.clear();
             //socket.disconnect();
 
         }else if(messageType === 'projection'){
@@ -323,8 +355,6 @@ $(function(){               // equal $(document).ready(function(){})
                 CKobject.embedSWF('/ckplayer/ckplayer.swf','vod_projection','ckplayer_a1','100%','100%',flashvars,params);
 
             }else if(data.type === 'avatar'){
-
-                options.series[0].data = showData;
 
                 $("#statistics").css({'display':'none'});
                 $("#vod_projection").css({'display':'none'});
@@ -421,7 +451,13 @@ $(function(){               // equal $(document).ready(function(){})
                 $("#vod_projection").css({'display':'none'});
                 $("#statistics").css({'display':''});
 
-                options.series[0].data = showData;
+                var _voteStr = localStorage.getItem(data.topicId);
+
+                var _voteObj;
+                _voteObj = JSON.parse(_voteStr);
+
+                options.title['text'] = _voteObj.name;
+                options.series[0].data = _voteObj.data;
 
                 hightChart = new Highcharts.Chart(options);
 
