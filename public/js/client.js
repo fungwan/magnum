@@ -17,6 +17,7 @@ var showData = [];//柱状图控件的加载数据
 var isShowVoteResults = 0;//控制是否大屏幕显示投票信息
 var isStarted = 0;//会议中的状态0：未开始，1：会议开始但议题未进行，2:会议开始议题进行中
 var timer = 0;//控制定时显示video的定时器
+var errorTimer = 0;//控制定时刷新网页获取Ip地址的定时器
 var storage;
 var arrived = 0;
 var no_arrived = 0;
@@ -124,8 +125,18 @@ $(function(){               // equal $(document).ready(function(){})
         return;
     }
 
-    var ip = $("#ip").text();
+    //check net conf is normal, is ip can get?
+    var errorMsg = $("#errorMsg").text();
+    if(errorMsg !== ''){
+        errorTimer = setTimeout(function(){
+            location.reload();
+        },5000);
+        return;
+    }else{
+        window.clearInterval(errorTimer); //清楚定时器
+    }
 
+    var ip = $("#ip").text();
     //socket.io
     var serverUrl = 'http://' + ip + ':6688';
     var socket = io.connect(serverUrl);

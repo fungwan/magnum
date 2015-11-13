@@ -91,7 +91,7 @@ exports.logon = function(mac, logonReply){
                 memberId = results.get_memberId[0].id;
                 var condition = 'WHERE memberId = ' + memberId +' and conferenceId = ';
                 condition += statusManage.getMeetingId();
-                dbService.selectValue('id', t_checkin, condition, callback);
+                dbService.selectValue('1', t_checkin, condition, callback);
             }
         }]
     },function(err,result) {
@@ -309,31 +309,37 @@ exports.checkin = function (mac, sendResponse) {
                 callback('err');
             }else{
                 memberId = results.get_memberId[0].id;
-                var condition = 'WHERE memberId = \'' + memberId +'\' and conferenceId = ';
-                condition += statusManage.getMeetingId();
-                dbService.selectValue('id', t_checkin, condition, callback);
-            }
-        }],
-        set_checkin:['Judgment_checkinRecord', function(callback, results){
-            var res = results.Judgment_checkinRecord;
-            var memberId = results.get_memberId[0].id;
-            if(res === ''){
-                logger.trace('db_operate::checkin() - 设备尚未签到，开始插入签到记录到数据库： ' + mac);
+                //modify by fengyun
                 var coll = 'conferenceId,checkinTime,memberId';
                 var meetingId = statusManage.getMeetingId();
                 var time = timeHelper.getCurrentTime(1);
                 var value = meetingId + ',\'' + time + '\',' + memberId;
                 dbService.insertValue(t_checkin, coll, value, callback);
-            }else{
-                logger.trace('db_operate::checkin() - 设备已签到，开始更新签到记录到数据库： ' + mac);
-                var value = 'checkinTime = \'' + timeHelper.getCurrentTime(1) + '\'';
-                var condition = 'WHERE id = ' + res;
-                dbService.updateValue(t_checkin, value, condition,callback);
+//                var condition = 'WHERE memberId = \'' + memberId +'\' and conferenceId = ';
+//                condition += statusManage.getMeetingId();
+//                dbService.selectValue('id', t_checkin, condition, callback);
             }
         }]
+//        set_checkin:['Judgment_checkinRecord', function(callback, results){
+//            var res = results.Judgment_checkinRecord;
+//            var memberId = results.get_memberId[0].id;
+//            if(res === ''){
+//                logger.trace('db_operate::checkin() - 设备尚未签到，开始插入签到记录到数据库： ' + mac);
+//                var coll = 'conferenceId,checkinTime,memberId';
+//                var meetingId = statusManage.getMeetingId();
+//                var time = timeHelper.getCurrentTime(1);
+//                var value = meetingId + ',\'' + time + '\',' + memberId;
+//                dbService.insertValue(t_checkin, coll, value, callback);
+//            }else{
+//                logger.trace('db_operate::checkin() - 设备已签到，开始更新签到记录到数据库： ' + mac);
+//                var value = 'checkinTime = \'' + timeHelper.getCurrentTime(1) + '\'';
+//                var condition = 'WHERE id = ' + res;
+//                dbService.updateValue(t_checkin, value, condition,callback);
+//            }
+//        }]
     },function(err,result) {
         if(err !== null){
-            logger.error('db_operate::checkin() - 签到失败： ' + mac);
+            logger.error('db_operate::checkin() -' + mac + ' 签到失败，原因是： ' + err);
             sendResponse(false);
         }else{
             sendResponse(true);

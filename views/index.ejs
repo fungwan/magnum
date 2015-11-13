@@ -15,7 +15,7 @@
 
         #no_arrived{color:red;}
 
-        #meetingInfo,#overInfo,#noMeeting {
+        #meetingInfo,#overInfo,#noMeeting,#meetingError {
             margin-top:10%
         }
 
@@ -55,6 +55,22 @@
 
 <div style="text-align:center">
 
+    <% if(errorMsg !== ''){%>
+
+    <div id="meetingError">
+        <img id="noMeetingLogo" src="/images/noMeeting.png" alt=" ">
+        <h1><p><%= errorMsg %><p></h1>
+    </div>
+    <div id="meetingInfo" style="display:none;">
+        <h1></h1>
+        <div id = "checkinInfo" style="display:none;">
+            <p>签到信息：已到<span id = "arrived">0</span>人,未到<span id = "no_arrived">0</span>人</p>
+        </div>
+        <div id="topicInfo" style="display:none;">
+            <p>议题: </p>
+        </div>
+    </div>
+    <%}else{%>
     <!-- meeting info && topic info Start -->
     <% if(title === '' && content === ''){%>
 
@@ -128,6 +144,8 @@
 
     <img id = "syncOfficeToWeb" src="" height="100%" width="100%" style="display: none; position: absolute; top: 0; left: 0;"/>
 
+    <%}%>
+    <span id = "errorMsg" style="display: none"><%= errorMsg %></span>
     <span id = "ip" style="display: none"><%= ip %></span>
     <span id = "screenStyle" style="display: none"><%= screenStyle %></span>
 </div>

@@ -31,7 +31,17 @@ exports.web_logon = function(req,res){
     }
 
     if(ipAddress === undefined){
-        res.send(503,'服务器IP地址获取错误，请检查网络配置！');
+
+        res.render('index',{title:'',
+            content:'',
+            arrived:0,
+            notArrived:0,
+            ip :'',
+            screenStyle:'',
+            errorMsg:'服务器IP地址获取错误，请检查网络配置!'});
+
+        //res.send(503,'服务器IP地址获取错误，请检查网络配置！');
+        logger.error('服务器IP地址获取错误，请检查网络配置');
         return;
     }
 
@@ -48,7 +58,8 @@ exports.web_logon = function(req,res){
                     arrived:0,
                     notArrived:0,
                     ip :ipAddress,
-                    screenStyle:''});
+                    screenStyle:'',
+                    errorMsg:''});
                 return;
             }
             var resValues = results.get_status[0];
@@ -80,7 +91,13 @@ exports.web_logon = function(req,res){
 
                             console.error('web-logon 获取签到信息出错');
 
-                            res.send(503,'获取签到信息出错！请检查服务器数据库配置');
+                            res.render('index',{title:'',
+                                content:'',
+                                arrived:0,
+                                notArrived:0,
+                                ip :'',
+                                screenStyle:'',
+                                errorMsg:'读取会议信息出错，请检查服务器数据库配置！'});
 
                         }else {
                             var info = data.jsonObj;
@@ -91,7 +108,8 @@ exports.web_logon = function(req,res){
                                 arrived:parameters.arrived,
                                 notArrived:parameters.notArrived,
                                 ip :ipAddress,
-                                screenStyle:strPlcStyle});
+                                screenStyle:strPlcStyle,
+                                errorMsg:''});
                         }
                     }
 
@@ -104,7 +122,8 @@ exports.web_logon = function(req,res){
                             arrived:0,
                             notArrived:0,
                             ip :ipAddress,
-                            screenStyle:strPlcStyle});
+                            screenStyle:strPlcStyle,
+                            errorMsg:''});
                         return;
                     }
 
@@ -127,7 +146,15 @@ exports.web_logon = function(req,res){
         if(err !== null){
 
             logger.error('初始化会议状态或者抓取议题内容失败，查询数据库错误！');
-            res.send(503,'获取议题信息出错！请检查服务器数据库配置！');
+            res.render('index',{title:'',
+                content:'',
+                arrived:0,
+                notArrived:0,
+                ip :'',
+                screenStyle:'',
+                errorMsg:'读取会议信息出错，请检查服务器数据库配置！'});
+
+            //res.send(503,'服务器IP地址获取错误，请检查网络配置！');
 
         }else{
             var topicName = results.get_checkinInfo;
@@ -136,7 +163,8 @@ exports.web_logon = function(req,res){
                                 arrived:0,
                                 notArrived:0,
                                 ip :ipAddress,
-                                screenStyle:strPlcStyle});
+                                screenStyle:strPlcStyle,
+                                errorMsg:''});
         }
     });
 };
