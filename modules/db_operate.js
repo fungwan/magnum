@@ -34,6 +34,8 @@ exports.logon = function(mac, logonReply){
      */
 
     var seatNo = -1;//针对登陆失败而定义的seatNo
+    var currStates = {};
+    var conferenceId = 0;
 
     async.auto({
         is_register: function(callback){
@@ -64,7 +66,13 @@ exports.logon = function(mac, logonReply){
 
             var rsData = results.get_meetingStates;
 
-            var conferenceId = rsData['id'];
+            conferenceId = rsData['id'];
+            var tmpStates = rsData['states'];
+            var arrayStates = tmpStates.split(".");
+            currStates['mainStatus'] = arrayStates[0];
+            currStates['topicStatus'] = arrayStates[1];
+            currStates['voteResult'] = arrayStates[2];
+
             if(conferenceId === '' || conferenceId === undefined){
                 callback('No Meeting', seatNo);//当前没有会议
                 return;
@@ -90,7 +98,7 @@ exports.logon = function(mac, logonReply){
 
                 memberId = results.get_memberId[0].id;
                 var condition = 'WHERE memberId = ' + memberId +' and conferenceId = ';
-                condition += statusManage.getMeetingId();
+                condition += conferenceId;
                 dbService.selectValue('1', t_checkin, condition, callback);
             }
         }]
@@ -129,14 +137,14 @@ exports.logon = function(mac, logonReply){
                 if(err === 'No Meeting'){
                     meetingId = -1;
                 }else{
-                    meetingId = statusManage.getMeetingId();
+                    meetingId = conferenceId;
                 }
 
                 var response = {
                     cmd:'logon',
                     result:'fail',
                     content:{
-                        status : statusManage.getCurrentStatus(),
+                        status : currStates,
                         meetingId : meetingId,
                         seatNum : seatNo
                     }
@@ -187,14 +195,14 @@ exports.logon = function(mac, logonReply){
                         'voteResult'  :    0
                 };
             else
-                status = statusManage.getCurrentStatus();
+                status = currStates;
 
             var response = {
                 cmd:'logon',
                 result:'success',
                 content:{
                     status:status,
-                    meetingId : statusManage.getMeetingId(),
+                    meetingId : conferenceId,
                     seatNum : orders,
                     peerInfo:result.get_memberId[0]
                 }
@@ -355,7 +363,7 @@ exports.checkin = function (mac, sendResponse) {
 //输入参数  触发器
 //modify by fengyun cancel get chairman info
 //==================================================================
-exports.updateCheckin = function(sendUpdateCheckin){
+exports.updateCheckin = function(conferenceId,sendUpdateCheckin){
     async.auto({
         get_arrived: function(callback){
 
@@ -368,12 +376,13 @@ exports.updateCheckin = function(sendUpdateCheckin){
              排除服务员的签到信息,去差集  modify by fengyun 2015/7/8
              */
 
-            var mulitTable = ' (SELECT memberId from plc_checkin WHERE conferenceId = ' + statusManage.getMeetingId()+' ) as a';
-            var condition = ' WHERE a.memberId NOT IN (SELECT id as memberId from plc_member WHERE conferenceId = ' + statusManage.getMeetingId() + ' and role = 0)';
+            var mulitTable = ' (SELECT memberId from plc_checkin WHERE conferenceId = ' + conferenceId +' ) as a';
+            var condition = ' WHERE a.memberId NOT IN (SELECT id as memberId from plc_member WHERE conferenceId = ' + conferenceId + ' and role = 0)';
+
             dbService.selectValue('count(a.memberId)',mulitTable, condition, callback);
         },
-        get_AllNum: [function(callback, results){
-            var condition = 'WHERE conferenceId = ' + statusManage.getMeetingId() +  ' and role != 0';
+        get_allNum: [function(callback, results){
+            var condition = 'WHERE conferenceId = ' + conferenceId +  ' and role != 0';
             dbService.selectValue('count(*)',t_member, condition, callback);
         }]
 //        get_chairmanMac:[function(callback, results){
@@ -397,7 +406,7 @@ exports.updateCheckin = function(sendUpdateCheckin){
 //
 //            }
             var arrived = result.get_arrived;
-            var allNum = result.get_AllNum;
+            var allNum = result.get_allNum;
             var response = {
                 cmd:'updateCheckin',
                 parameters:{
@@ -787,7 +796,7 @@ exports.setMeetingStatus= function(status,meetingId){
     });
 };
 
-exports.initMeetingStatus= _initMeetingStatus
+exports.initMeetingStatus= _initMeetingStatus;
 
 function _initMeetingStatus (paCallback){
     async.auto({

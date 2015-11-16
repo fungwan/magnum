@@ -70,7 +70,6 @@ var service = {
         async.auto({
             query_db: function(_callback){
                 var sqlData = 'SELECT ' + queryValue + ' FROM ' + tableName + ' ' +condition;
-
                 _query(sqlData,_callback);
             },
             get_data: ['query_db',function(_callback ,results) {

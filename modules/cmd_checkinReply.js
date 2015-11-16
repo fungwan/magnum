@@ -28,7 +28,7 @@ exports.checkinReply = function(parameters, socket){
                     status:statusManage.getCurrentStatus()
                 }
             };
-            dbOperate.updateCheckin(sendUpdateCheckin);
+            dbOperate.updateCheckin(statusManage.getMeetingId(),sendUpdateCheckin);
 
         }else{
             response = {

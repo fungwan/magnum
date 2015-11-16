@@ -29,26 +29,27 @@ app.use(require('express').static(path.join(__dirname, 'public')));
 route(app);
 
 server.listen(6688);
-logger.info('Magnum has been started and listening on port : 6688 ');
 
-var dbInitTimer = setTimeout(function(){
+var dbInitTimer = setInterval(function(){
 
-    logger.trace('db init timer...');
+    db_operator.initMeetingStatus(listen);
 
-},5000);
+},1500);
 
 //从数据库读取最新的会议状态，为防止服务器崩溃重启后会议状态清零
-db_operator.initMeetingStatus(listen);
+
 function listen(err,data){
 
     if(err === null){
 
-        //clearTimeout(dbInitTimer);
+        clearInterval(dbInitTimer);
 
         pingPong.openTimer();
 
+        logger.info('Magnum has been started and listening on port : 6688 ');
+
     }else{
-        db_operator.initMeetingStatus(listen);
+
         logger.error('会议初始化状态失败，服务器启动失败！请检查数据库配置,然后重启!');
     }
 }
@@ -91,7 +92,7 @@ udpServer.on("message", function (msg, rinfo) {
             parameters:	null
         }));
 
-        udpServer.send(message, 0, message.length, rinfo.port, rinfo.address, function(err, bytes) {
+        udpServer.send(message, 0, message.length, 41235, rinfo.address, function(err, bytes) {
             //socket.close();
         });
     }

@@ -176,35 +176,40 @@ $(function(){               // equal $(document).ready(function(){})
             $("#overInfo").css({'display':'none'});
             $("#noMeeting").css({'display':'none'});
             $("#topicInfo").css({'display':'none'});
-            $("#meetingInfo").css({'display':''});
-            $("#checkinInfo").css({'display':''});
 
             var data = jsonObj.parameters;
             var styleJsonObj = data.forWebScreen;
 
+            $("#meetingInfo").css({'display':''});
+
             var ip = $("#ip").text();
             var logoUrl = 'http://' + ip + ':8080';
-            if(styleJsonObj['name'] === undefined && styleJsonObj['arrived'] === undefined){
-                alert('后台服务器出错，请尝试刷新界面...');
+            if(styleJsonObj['name'] === undefined || styleJsonObj['arrived'] === undefined ||
+                styleJsonObj['notArrived'] === undefined){
+                errorTimer = setTimeout(function(){
+                    location.reload();
+                },5000);
+                $("#meetingInfo > h1").text('数据库异常，请稍后...');
                 return;
+            }else{
+                $("#checkinInfo").css({'display':''});
+
+                $("#meetingInfo > h1").text(styleJsonObj['name']);
+                $("body").css(styleJsonObj['screen_bg']);
+                var imgUrl = logoUrl + styleJsonObj['log_src']['src'];
+                styleJsonObj['log_src']['src'] = imgUrl;
+                $("#meetingLogo").attr(styleJsonObj['log_src']);
+
+                $(".header-bg").css(styleJsonObj['logo_pos']);
+
+                $("#meetingInfo > h1").css(styleJsonObj['meeting_title']);
+
+                $("#checkinInfo > p").css(styleJsonObj['meeting_info']);
+                $("#topicInfo > p").css(styleJsonObj['meeting_info']);
+
+                $("#arrived").text(styleJsonObj['arrived']);
+                $("#no_arrived").text(styleJsonObj['notArrived']);
             }
-
-            $("#meetingInfo > h1").text(styleJsonObj['name']);
-            $("body").css(styleJsonObj['screen_bg']);
-            var imgUrl = logoUrl + styleJsonObj['log_src']['src'];
-            styleJsonObj['log_src']['src'] = imgUrl;
-            $("#meetingLogo").attr(styleJsonObj['log_src']);
-
-            $(".header-bg").css(styleJsonObj['logo_pos']);
-
-            $("#meetingInfo > h1").css(styleJsonObj['meeting_title']);
-
-            $("#checkinInfo > p").css(styleJsonObj['meeting_info']);
-            $("#topicInfo > p").css(styleJsonObj['meeting_info']);
-
-            $("#arrived").text(styleJsonObj['arrived']);
-            $("#no_arrived").text(styleJsonObj['notArrived']);
-
 
         }else if(messageType === 'updateCheckin'){
             var data = jsonObj.parameters;

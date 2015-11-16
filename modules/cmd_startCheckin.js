@@ -35,7 +35,8 @@ exports.startCheckin = function(parameters, socket){
                 _plcStyle = styleData;
             }
 
-            dbOperate.updateCheckin(sendUpdateCheckin);
+            //for webscreen
+            dbOperate.updateCheckin(meetingId,sendUpdateCheckin);
 
             function sendUpdateCheckin(data){
                 if(data.result === false){
@@ -65,7 +66,6 @@ exports.startCheckin = function(parameters, socket){
                     }
                 };
 
-                //logger.trace('cmd_startCheckin - 参数传递正确与否: ' +jsonFormat.jsonToString(strPlcStyle));
                 logger.trace('cmd_startCheckin - 开始通知各个终端开始签到: ' + jsonFormat.jsonToString(cmdCheckin));
                 transponder.messageForwardAll(socket, jsonFormat.jsonToString(cmdCheckin));
 

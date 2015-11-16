@@ -83,7 +83,7 @@ exports.web_logon = function(req,res){
 
                 if(statusArr[0] === '2'){//show checkinInfo
 
-                    dbOperate.updateCheckin(sendUpdateCheckin);
+                    dbOperate.updateCheckin(conferenceId,sendUpdateCheckin);
 
                     function sendUpdateCheckin(data){
                         if(data.result === false){
