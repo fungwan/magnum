@@ -67,16 +67,16 @@ exports.logon = function(mac, logonReply){
             var rsData = results.get_meetingStates;
 
             conferenceId = rsData['id'];
+            if(conferenceId === '' || conferenceId === undefined){
+                callback('No Meeting', seatNo);//当前没有会议
+                return;
+            }
+
             var tmpStates = rsData['states'];
             var arrayStates = tmpStates.split(".");
             currStates['mainStatus'] = arrayStates[0];
             currStates['topicStatus'] = arrayStates[1];
             currStates['voteResult'] = arrayStates[2];
-
-            if(conferenceId === '' || conferenceId === undefined){
-                callback('No Meeting', seatNo);//当前没有会议
-                return;
-            }
 
             var sql = 'SELECT plc_member.id, plc_member.name, plc_member.job,plc_member.company,plc_member.avatarUrl,plc_member.role FROM  plc_member, ' +
                 '(select id FROM plc_device WHERE mac = \'' + mac +'\') as deviceId ' +
